@@ -70,3 +70,6 @@ api/prisma/migrations/
 tmp/
 temp/
 
+.env.local
+app/.env.local
+api/.env

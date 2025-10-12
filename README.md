@@ -176,19 +176,38 @@ docker-compose up -d  # Starts Postgres, Redis
 ### 3. Configure Environment
 
 ```bash
-cp .env.example .env
-# Edit .env with your keys (see Environment Variables section)
+# Copy environment templates
+cp .env.example api/.env
+cp .env.example app/.env.local
+
+# Edit api/.env with:
+# - DATABASE_URL (PostgreSQL on port 5433)
+# - REDIS_URL
+# - JWT_SECRET (generate a random string)
+# - STRIPE_SECRET_KEY (from https://dashboard.stripe.com)
+
+# Edit app/.env.local with:
+# - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY (from https://dashboard.clerk.com)
+# - CLERK_SECRET_KEY (from https://dashboard.clerk.com)
+# - NEXT_PUBLIC_API_URL=http://localhost:3001
 ```
+
+**Important**: Get your Clerk keys:
+1. Sign up at https://clerk.com
+2. Create a new application
+3. Copy your keys to `app/.env.local`
+4. See `app/CLERK_SETUP.md` for detailed instructions
 
 ### 4. Set Up Database
 
 ```bash
 cd api
+pnpm prisma generate
 pnpm prisma migrate dev
 pnpm prisma db seed
 ```
 
-### 5. Bootstrap Stripe
+### 5. Bootstrap Stripe (Optional)
 
 ```bash
 cd scripts
@@ -198,6 +217,10 @@ pnpm tsx stripe-setup.ts  # Creates products/prices
 ### 6. Start Dev Servers
 
 ```bash
+# From root directory:
+pnpm dev  # Starts both API (3001) and Dashboard (3000)
+
+# Or start individually:
 # Terminal 1: API
 cd api
 pnpm dev
