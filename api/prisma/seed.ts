@@ -200,13 +200,13 @@ async function main() {
           ],
           status: isSuccess ? JobStatus.SUCCEEDED : JobStatus.FAILED,
           input: { text: 'Sample input text...', model: 'gpt-4' },
-          output: isSuccess ? { result: 'Sample output...' } : null,
+          ...(isSuccess && { output: { result: 'Sample output...' } }),
           tokenUsed: tokens,
           costCents: Math.floor((tokens / 1000) * 2), // $0.02 per 1k tokens
-          error: isSuccess ? null : 'Rate limit exceeded',
+          ...(isSuccess ? {} : { error: 'Rate limit exceeded' }),
           createdAt,
-          startedAt: isSuccess ? new Date(createdAt.getTime() + 1000) : null,
-          completedAt: isSuccess ? new Date(createdAt.getTime() + 5000) : null,
+          ...(isSuccess && { startedAt: new Date(createdAt.getTime() + 1000) }),
+          ...(isSuccess && { completedAt: new Date(createdAt.getTime() + 5000) }),
         },
       })
     );
