@@ -1,31 +1,46 @@
-import { Controller, Get, Post, Delete, Body, Param, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Delete,
+  Body,
+  Param,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { ApiKeysService } from './apikeys.service';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { CreateApiKeyDto } from './dto/create-apikey.dto';
 
 @ApiTags('API Keys')
-@Controller({ path: 'orgs/:orgId/api-keys', version: '1' })
+@Controller({ path: 'api-keys', version: '1' })
 @UseGuards(JwtAuthGuard)
-@ApiBearerAuth('jwt')
+@ApiBearerAuth()
 export class ApiKeysController {
-  constructor(private apiKeysService: ApiKeysService) {}
+  constructor(private readonly apiKeysService: ApiKeysService) {}
 
   @Get()
-  @ApiOperation({ summary: 'List API keys' })
-  async list(@Param('orgId') orgId: string) {
-    return this.apiKeysService.list(orgId);
+  @ApiOperation({ summary: 'List all API keys for user organizations' })
+  async listKeys(@CurrentUser() user: any) {
+    return this.apiKeysService.listKeys(user.userId);
   }
 
   @Post()
-  @ApiOperation({ summary: 'Create new API key' })
-  async create(@Param('orgId') orgId: string, @Body() data: { name: string }) {
-    return this.apiKeysService.create(orgId, data.name);
+  @ApiOperation({ summary: 'Create a new API key' })
+  async createKey(
+    @CurrentUser() user: any,
+    @Body() createKeyDto: CreateApiKeyDto,
+  ) {
+    return this.apiKeysService.createKey(user.userId, createKeyDto);
   }
 
-  @Delete(':keyId')
-  @ApiOperation({ summary: 'Revoke API key' })
-  async revoke(@Param('keyId') keyId: string) {
-    return this.apiKeysService.revoke(keyId);
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: 'Revoke an API key' })
+  async revokeKey(@CurrentUser() user: any, @Param('id') id: string) {
+    await this.apiKeysService.revokeKey(user.userId, id);
   }
 }
-

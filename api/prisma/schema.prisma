@@ -16,6 +16,7 @@ datasource db {
 
 model User {
   id        String   @id @default(cuid())
+  clerkId   String   @unique // Clerk user ID for authentication
   email     String   @unique
   name      String?
   createdAt DateTime @default(now())
@@ -26,6 +27,7 @@ model User {
   auditLogs   AuditLog[]   @relation("AuditLogActor")
 
   @@index([email])
+  @@index([clerkId])
   @@map("users")
 }
 

@@ -1,18 +1,22 @@
-import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { PrismaService } from '../../infra/prisma/prisma.service';
-import * as bcrypt from 'bcrypt';
-import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
+import { ApiKeysService } from '../../modules/apikeys/apikeys.service';
 
 @Injectable()
 export class ApiKeyGuard implements CanActivate {
   constructor(
-    private prisma: PrismaService,
-    private reflector: Reflector
+    private reflector: Reflector,
+    private apiKeysService: ApiKeysService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+    // Check if route is public
+    const isPublic = this.reflector.getAllAndOverride<boolean>('isPublic', [
       context.getHandler(),
       context.getClass(),
     ]);
@@ -22,56 +26,41 @@ export class ApiKeyGuard implements CanActivate {
     }
 
     const request = context.switchToHttp().getRequest();
-    const authHeader = request.headers.authorization;
+    const apiKey = this.extractApiKey(request);
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new UnauthorizedException('API key required');
+    if (!apiKey) {
+      throw new UnauthorizedException('API key is required');
     }
 
-    const apiKey = authHeader.substring(7); // Remove 'Bearer '
+    try {
+      const { orgId, keyId } = await this.apiKeysService.verifyKey(apiKey);
 
-    if (!apiKey.startsWith('lk_')) {
-      throw new UnauthorizedException('Invalid API key format');
-    }
+      // Attach org info to request
+      request.org = { id: orgId };
+      request.apiKeyId = keyId;
 
-    // Extract prefix (first 20 chars)
-    const prefix = apiKey.substring(0, 20);
-
-    // Find API key by prefix
-    const key = await this.prisma.apiKey.findFirst({
-      where: {
-        prefix,
-        revokedAt: null,
-      },
-      include: {
-        org: true,
-      },
-    });
-
-    if (!key) {
-      throw new UnauthorizedException('API key not found or revoked');
-    }
-
-    // Verify full key hash
-    const isValid = await bcrypt.compare(apiKey, key.hashedKey);
-
-    if (!isValid) {
+      return true;
+    } catch (error) {
       throw new UnauthorizedException('Invalid API key');
     }
+  }
 
-    // Update last used timestamp (async, don't await)
-    this.prisma.apiKey
-      .update({
-        where: { id: key.id },
-        data: { lastUsedAt: new Date() },
-      })
-      .catch(() => {});
+  private extractApiKey(request: any): string | null {
+    // Check Authorization header: Bearer lk_test_pk_...
+    const authHeader = request.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const key = authHeader.substring(7);
+      if (key.startsWith('lk_')) {
+        return key;
+      }
+    }
 
-    // Attach org and apiKey to request
-    request.org = key.org;
-    request.apiKey = key;
+    // Check X-API-Key header
+    const apiKeyHeader = request.headers['x-api-key'];
+    if (apiKeyHeader && apiKeyHeader.startsWith('lk_')) {
+      return apiKeyHeader;
+    }
 
-    return true;
+    return null;
   }
 }
-

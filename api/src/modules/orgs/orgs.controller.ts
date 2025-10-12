@@ -15,7 +15,7 @@ export class OrgsController {
   @ApiOperation({ summary: 'List user organizations' })
   @ApiResponse({ status: 200, description: 'Organizations retrieved' })
   async list(@CurrentUser() user: any) {
-    return this.orgsService.findUserOrgs(user.id);
+    return this.orgsService.findUserOrgs(user.userId);
   }
 
   @Get(':orgId')
@@ -29,7 +29,7 @@ export class OrgsController {
   @ApiOperation({ summary: 'Create new organization' })
   @ApiResponse({ status: 201, description: 'Organization created' })
   async create(@CurrentUser() user: any, @Body() data: any) {
-    return this.orgsService.create(user.id, data);
+    return this.orgsService.create(user.userId, data);
   }
 
   @Patch(':orgId')
