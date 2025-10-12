@@ -1,0 +1,39 @@
+{
+  "name": "launchkit-ai",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Production-grade starter for AI apps with usage-based billing",
+  "author": "LaunchKit Team",
+  "license": "MIT",
+  "workspaces": [
+    "app",
+    "api",
+    "workers",
+    "scripts"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "lint": "turbo run lint",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
+    "db:migrate": "cd api && pnpm prisma migrate dev",
+    "db:seed": "cd api && pnpm prisma db seed",
+    "db:studio": "cd api && pnpm prisma studio",
+    "stripe:setup": "cd scripts && tsx stripe-setup.ts",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "prettier": "^3.1.0",
+    "turbo": "^1.11.0",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.14.0"
+}
+
