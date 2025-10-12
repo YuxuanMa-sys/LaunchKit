@@ -8,12 +8,19 @@ const apiClient = axios.create({
 });
 
 // Add auth token to requests
-apiClient.interceptors.request.use((config) => {
-  // TODO: Add JWT token from auth provider
-  // const token = getAuthToken();
-  // if (token) {
-  //   config.headers.Authorization = `Bearer ${token}`;
-  // }
+apiClient.interceptors.request.use(async (config) => {
+  // Get Clerk token if in browser
+  if (typeof window !== 'undefined') {
+    try {
+      // @ts-ignore - Clerk global is available after ClerkProvider
+      const token = await window.Clerk?.session?.getToken();
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    } catch (error) {
+      console.error('Failed to get auth token:', error);
+    }
+  }
   return config;
 });
 

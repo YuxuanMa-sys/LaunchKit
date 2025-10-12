@@ -1,7 +1,14 @@
 import { ReactNode } from 'react';
 import Link from 'next/link';
+import { UserButton } from '@clerk/nextjs';
+import { auth } from '@clerk/nextjs/server';
 
-export default function DashboardLayout({ children }: { children: ReactNode }) {
+export default async function DashboardLayout({ children }: { children: ReactNode }) {
+  const { userId } = await auth();
+  
+  if (!userId) {
+    return null; // Middleware will redirect
+  }
   return (
     <div className="flex h-screen flex-col">
       {/* Header */}
@@ -39,7 +46,14 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             </nav>
           </div>
           <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-600">user@example.com</span>
+            <UserButton
+              appearance={{
+                elements: {
+                  avatarBox: 'w-10 h-10',
+                },
+              }}
+              afterSignOutUrl="/"
+            />
           </div>
         </div>
       </header>

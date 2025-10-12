@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { SignedIn, SignedOut, SignInButton } from '@clerk/nextjs';
 
 export default function HomePage() {
   return (
@@ -14,12 +15,21 @@ export default function HomePage() {
           Organizations • RBAC • API Keys • Billing • Webhooks • Observability
         </p>
         <div className="mt-10 flex items-center justify-center gap-x-6">
-          <Link
-            href="/dashboard"
-            className="rounded-md bg-indigo-600 px-6 py-3 text-lg font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-          >
-            Go to Dashboard
-          </Link>
+          <SignedIn>
+            <Link
+              href="/dashboard"
+              className="rounded-md bg-indigo-600 px-6 py-3 text-lg font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+            >
+              Go to Dashboard
+            </Link>
+          </SignedIn>
+          <SignedOut>
+            <SignInButton mode="modal">
+              <button className="rounded-md bg-indigo-600 px-6 py-3 text-lg font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+                Sign In
+              </button>
+            </SignInButton>
+          </SignedOut>
           <Link
             href="https://github.com/YuxuanMa-sys/LaunchKit"
             target="_blank"
