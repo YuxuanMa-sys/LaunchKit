@@ -1,0 +1,378 @@
+// LaunchKit AI - Prisma Schema
+// This defines the complete data model for the platform
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// CORE ENTITIES - Users, Organizations, Membership
+// ============================================================================
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  memberships Membership[]
+  auditLogs   AuditLog[]   @relation("AuditLogActor")
+
+  @@index([email])
+  @@map("users")
+}
+
+enum OrgRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+model Org {
+  id                 String   @id @default(cuid())
+  name               String
+  slug               String   @unique
+  billingCustomerId  String?  @unique // Stripe customer ID
+  subscriptionId     String?  @unique // Stripe subscription ID
+  planTier           PlanTier @default(FREE)
+  trialEndsAt        DateTime?
+  subscriptionStatus String?  // active, past_due, canceled, etc.
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  // Relations
+  memberships      Membership[]
+  apiKeys          ApiKey[]
+  usageMeters      UsageMeter[]
+  jobs             Job[]
+  auditLogs        AuditLog[]
+  webhookEndpoints WebhookEndpoint[]
+  featureFlags     FeatureFlag[]
+  invoiceShadows   InvoiceShadow[]
+
+  @@index([slug])
+  @@index([billingCustomerId])
+  @@map("orgs")
+}
+
+model Membership {
+  id        String   @id @default(cuid())
+  userId    String
+  orgId     String
+  role      OrgRole  @default(MEMBER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  org  Org  @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, orgId])
+  @@index([userId])
+  @@index([orgId])
+  @@map("memberships")
+}
+
+// ============================================================================
+// API KEYS - Secure key management with hashing
+// ============================================================================
+
+model ApiKey {
+  id         String    @id @default(cuid())
+  orgId      String
+  name       String // User-friendly name like "Production API Key"
+  hashedKey  String    @unique // bcrypt hashed full key
+  prefix     String // Visible prefix like "lk_live_pk_abc"
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
+  revokedAt  DateTime?
+
+  // Relations
+  org       Org        @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  auditLogs AuditLog[] @relation("AuditLogApiKey")
+
+  @@index([orgId])
+  @@index([prefix])
+  @@index([orgId, revokedAt])
+  @@map("api_keys")
+}
+
+// ============================================================================
+// BILLING - Plans, Usage Metering, Stripe Events
+// ============================================================================
+
+enum PlanTier {
+  FREE
+  PRO
+  ENTERPRISE
+}
+
+model Plan {
+  id                      String   @id @default(cuid())
+  code                    PlanTier @unique
+  name                    String
+  monthlyPriceCents       Int // 0 for FREE, 4900 for PRO, etc.
+  includedTokens          Int // 50000 for FREE, 5000000 for PRO
+  overagePer1kTokensCents Int // 0 for FREE (hard limit), 2 for PRO ($0.02)
+  maxSeats                Int? // 3 for FREE, 10 for PRO, null for unlimited
+  maxApiKeys              Int? // 1 for FREE, 5 for PRO, null for unlimited
+  features                Json? // JSON array of feature flags
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  @@map("plans")
+}
+
+model UsageMeter {
+  id          String   @id @default(cuid())
+  orgId       String
+  windowStart DateTime // Start of the billing period (e.g., 2025-10-01 00:00:00)
+  windowEnd   DateTime // End of the billing period (e.g., 2025-10-01 01:00:00 for hourly)
+  tokens      Int      @default(0)
+  jobs        Int      @default(0)
+  costCents   Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  // Relations
+  org Org @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, windowStart, windowEnd])
+  @@index([orgId, windowStart, windowEnd])
+  @@index([windowStart])
+  @@map("usage_meters")
+}
+
+model StripeEvent {
+  id          String    @id @default(cuid())
+  eventId     String    @unique // Stripe event ID (evt_...)
+  type        String // event type like "invoice.paid"
+  payload     Json // Full Stripe event payload
+  processedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([type])
+  @@index([processedAt])
+  @@map("stripe_events")
+}
+
+model InvoiceShadow {
+  id         String   @id @default(cuid())
+  orgId      String
+  month      String // "2025-10" format
+  totalCents Int
+  breakdown  Json // Detailed cost breakdown
+  createdAt  DateTime @default(now())
+
+  // Relations
+  org Org @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, month])
+  @@index([orgId])
+  @@map("invoice_shadows")
+}
+
+// ============================================================================
+// JOBS - Async AI workload processing
+// ============================================================================
+
+enum JobType {
+  SUMMARIZE
+  EMBED
+  TRANSLATE
+  CLASSIFY
+  GENERATE
+}
+
+enum JobStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
+  CANCELLED
+}
+
+model Job {
+  id         String    @id @default(cuid())
+  orgId      String
+  type       JobType
+  status     JobStatus @default(QUEUED)
+  input      Json // Input parameters
+  output     Json? // Result output
+  tokenUsed  Int       @default(0)
+  costCents  Int       @default(0)
+  error      String? // Error message if failed
+  startedAt  DateTime?
+  completedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  // Relations
+  org Org @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@index([orgId, createdAt])
+  @@index([status])
+  @@index([orgId, status])
+  @@map("jobs")
+}
+
+// ============================================================================
+// FEATURE FLAGS - Plan-based and org-level toggles
+// ============================================================================
+
+model FeatureFlag {
+  id        String    @id @default(cuid())
+  orgId     String? // null = global flag, set = org-specific override
+  key       String // e.g., "realtime_streaming", "advanced_analytics"
+  enabled   Boolean   @default(false)
+  planGate  PlanTier? // Minimum plan required (null = available to all)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Relations
+  org Org? @relation(fields: [orgId], references: [id], onDelete: Cascade)
+
+  @@unique([orgId, key])
+  @@index([key])
+  @@index([orgId])
+  @@map("feature_flags")
+}
+
+// ============================================================================
+// AUDIT LOGS - Compliance and security tracking
+// ============================================================================
+
+model AuditLog {
+  id            String   @id @default(cuid())
+  orgId         String
+  actorUserId   String? // User who performed action
+  actorApiKeyId String? // Or API key that performed action
+  action        String // e.g., "apikey.created", "member.invited", "plan.changed"
+  targetType    String? // e.g., "ApiKey", "User", "Org"
+  targetId      String? // ID of the affected resource
+  metadata      Json? // Additional context
+  ip            String?
+  userAgent     String?
+  createdAt     DateTime @default(now())
+
+  // Relations
+  org       Org     @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  actorUser User?   @relation("AuditLogActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  actorKey  ApiKey? @relation("AuditLogApiKey", fields: [actorApiKeyId], references: [id], onDelete: SetNull)
+
+  @@index([orgId, createdAt])
+  @@index([action])
+  @@index([actorUserId])
+  @@map("audit_logs")
+}
+
+// ============================================================================
+// WEBHOOKS - Outbound webhooks to customer servers
+// ============================================================================
+
+model WebhookEndpoint {
+  id             String    @id @default(cuid())
+  orgId          String
+  url            String
+  secret         String // HMAC secret for signing
+  enabled        Boolean   @default(true)
+  lastDeliveryAt DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // Relations
+  org        Org               @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  deliveries WebhookDelivery[]
+
+  @@index([orgId])
+  @@index([enabled])
+  @@map("webhook_endpoints")
+}
+
+enum WebhookDeliveryStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  RETRYING
+}
+
+model WebhookDelivery {
+  id                String                @id @default(cuid())
+  webhookEndpointId String
+  eventType         String // e.g., "job.succeeded", "usage.updated"
+  payload           Json
+  signature         String // X-LK-Signature value
+  status            WebhookDeliveryStatus @default(PENDING)
+  attempt           Int                   @default(0)
+  maxAttempts       Int                   @default(5)
+  nextAttemptAt     DateTime?
+  lastAttemptAt     DateTime?
+  responseStatus    Int? // HTTP status from last attempt
+  responseBody      String? // Response from last attempt
+  error             String? // Error message
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+
+  // Relations
+  webhookEndpoint WebhookEndpoint @relation(fields: [webhookEndpointId], references: [id], onDelete: Cascade)
+
+  @@index([webhookEndpointId])
+  @@index([status])
+  @@index([nextAttemptAt])
+  @@index([eventType])
+  @@map("webhook_deliveries")
+}
+
+// ============================================================================
+// RATE LIMITING - Token bucket for API throttling
+// ============================================================================
+
+enum RateLimitScope {
+  IP
+  API_KEY
+  USER
+  ORG
+}
+
+model RateLimitBucket {
+  id           String         @id @default(cuid())
+  scope        RateLimitScope
+  key          String // IP address, API key prefix, user ID, or org ID
+  tokens       Int // Remaining tokens in bucket
+  capacity     Int // Max bucket capacity
+  refillRate   Int // Tokens added per interval
+  refillInterval Int // Interval in seconds
+  lastRefillAt DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@unique([scope, key])
+  @@index([scope, key])
+  @@map("rate_limit_buckets")
+}
+
+// ============================================================================
+// IDEMPOTENCY - Request deduplication
+// ============================================================================
+
+model IdempotencyKey {
+  id             String   @id @default(cuid())
+  orgId          String
+  idempotencyKey String
+  requestPath    String
+  requestMethod  String
+  responseStatus Int
+  responseBody   Json
+  createdAt      DateTime @default(now())
+  expiresAt      DateTime // TTL: 24 hours
+
+  @@unique([orgId, idempotencyKey])
+  @@index([expiresAt])
+  @@map("idempotency_keys")
+}
+
