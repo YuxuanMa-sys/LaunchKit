@@ -3,6 +3,7 @@ import { Job } from 'bullmq';
 import { Logger } from '@nestjs/common';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 import { UsageService } from '../../usage/usage.service';
+import { WebhooksService } from '../../webhooks/webhooks.service';
 import { JobStatus, JobType } from '@prisma/client';
 import { JobPayload } from '../queue.service';
 
@@ -15,6 +16,7 @@ export class AIJobsProcessor extends WorkerHost {
   constructor(
     private prisma: PrismaService,
     private usageService: UsageService,
+    private webhooksService: WebhooksService,
   ) {
     super();
   }
@@ -95,6 +97,21 @@ export class AIJobsProcessor extends WorkerHost {
         `Job ${jobId} completed successfully. Tokens: ${tokensUsed}, Cost: $${costCents / 100}`,
       );
 
+      // Send webhook notification for successful job completion
+      try {
+        await this.webhooksService.sendWebhook(orgId, 'job.completed', {
+          jobId,
+          type,
+          status: 'SUCCEEDED',
+          result,
+          tokensUsed,
+          costCents,
+          completedAt: new Date().toISOString(),
+        });
+      } catch (webhookError: any) {
+        this.logger.warn(`Failed to send job completion webhook: ${webhookError.message}`);
+      }
+
       return result;
     } catch (error: any) {
       this.logger.error(`Job ${jobId} failed: ${error.message}`, error.stack);
@@ -108,6 +125,20 @@ export class AIJobsProcessor extends WorkerHost {
           completedAt: new Date(),
         },
       });
+
+      // Send webhook notification for job failure
+      try {
+        await this.webhooksService.sendWebhook(orgId, 'job.failed', {
+          jobId,
+          type,
+          status: 'FAILED',
+          error: error.message,
+          failedAt: new Date().toISOString(),
+          attempts: job.attemptsMade + 1,
+        });
+      } catch (webhookError: any) {
+        this.logger.warn(`Failed to send job failure webhook: ${webhookError.message}`);
+      }
 
       throw error; // Re-throw to let BullMQ handle retries
     }

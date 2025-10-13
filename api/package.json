@@ -36,6 +36,7 @@
     "@opentelemetry/sdk-node": "^0.45.0",
     "@prisma/client": "5.22.0",
     "@types/ioredis": "^5.0.0",
+    "axios": "^1.12.2",
     "bcrypt": "^6.0.0",
     "bullmq": "^5.1.0",
     "class-transformer": "^0.5.1",

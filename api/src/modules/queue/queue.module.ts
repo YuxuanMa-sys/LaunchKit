@@ -1,10 +1,12 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { QueueService } from './queue.service';
 import { QueueController } from './queue.controller';
 import { AIJobsProcessor } from './processors/ai-jobs.processor';
+import { WebhookProcessor } from './processors/webhook.processor';
 import { UsageModule } from '../usage/usage.module';
+import { WebhooksModule } from '../webhooks/webhooks.module';
 
 @Module({
   imports: [
@@ -31,9 +33,10 @@ import { UsageModule } from '../usage/usage.module';
       },
     ),
     UsageModule, // For recording usage in processor
+    forwardRef(() => WebhooksModule), // For sending webhook notifications
   ],
   controllers: [QueueController],
-  providers: [QueueService, AIJobsProcessor],
+  providers: [QueueService, AIJobsProcessor, WebhookProcessor],
   exports: [QueueService, BullModule],
 })
 export class QueueModule {}
