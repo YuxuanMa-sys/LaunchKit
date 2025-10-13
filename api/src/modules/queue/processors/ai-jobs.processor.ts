@@ -3,10 +3,8 @@ import { Job } from 'bullmq';
 import { Logger } from '@nestjs/common';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 import { UsageService } from '../../usage/usage.service';
+import { JobStatus, JobType } from '@prisma/client';
 import { JobPayload } from '../queue.service';
-
-type JobType = 'SUMMARIZE' | 'CLASSIFY' | 'SENTIMENT' | 'TRANSLATE' | 'EXTRACT' | 'EMBED' | 'GENERATE';
-type JobStatus = 'QUEUED' | 'PROCESSING' | 'SUCCEEDED' | 'FAILED' | 'CANCELLED';
 
 @Processor('ai-jobs', {
   concurrency: 5, // Process up to 5 jobs concurrently
@@ -31,7 +29,7 @@ export class AIJobsProcessor extends WorkerHost {
       await this.prisma.job.update({
         where: { id: jobId },
         data: {
-          status: 'PROCESSING',
+          status: JobStatus.PROCESSING,
           startedAt: new Date(),
         },
       });
@@ -41,27 +39,27 @@ export class AIJobsProcessor extends WorkerHost {
       let tokensUsed = 0;
 
       switch (type) {
-        case 'SUMMARIZE':
+        case JobType.SUMMARIZE:
           result = await this.processSummarize(input);
           tokensUsed = this.estimateTokens(input.text + result.summary);
           break;
 
-        case 'CLASSIFY':
+        case JobType.CLASSIFY:
           result = await this.processClassify(input);
           tokensUsed = this.estimateTokens(input.text + result.classification);
           break;
 
-        case 'SENTIMENT':
+        case JobType.SENTIMENT:
           result = await this.processSentiment(input);
           tokensUsed = this.estimateTokens(input.text);
           break;
 
-        case 'TRANSLATE':
+        case JobType.TRANSLATE:
           result = await this.processTranslate(input);
           tokensUsed = this.estimateTokens(input.text + result.translation);
           break;
 
-        case 'EXTRACT':
+        case JobType.EXTRACT:
           result = await this.processExtract(input);
           tokensUsed = this.estimateTokens(input.text + JSON.stringify(result.entities));
           break;
@@ -77,7 +75,7 @@ export class AIJobsProcessor extends WorkerHost {
       await this.prisma.job.update({
         where: { id: jobId },
         data: {
-          status: 'SUCCEEDED',
+          status: JobStatus.SUCCEEDED,
           output: result,
           tokenUsed: tokensUsed,
           costCents,
@@ -105,7 +103,7 @@ export class AIJobsProcessor extends WorkerHost {
       await this.prisma.job.update({
         where: { id: jobId },
         data: {
-          status: 'FAILED',
+          status: JobStatus.FAILED,
           error: error.message,
           completedAt: new Date(),
         },
