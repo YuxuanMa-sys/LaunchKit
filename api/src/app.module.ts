@@ -13,6 +13,7 @@ import { UsageModule } from './modules/usage/usage.module';
 import { BillingModule } from './modules/billing/billing.module';
 import { WebhooksModule } from './modules/webhooks/webhooks.module';
 import { AuditModule } from './modules/audit/audit.module';
+import { QueueModule } from './modules/queue/queue.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { AuditModule } from './modules/audit/audit.module';
 
     // Infrastructure
     PrismaModule,
+    QueueModule, // BullMQ job queue
 
     // Feature modules
     AuthModule,
