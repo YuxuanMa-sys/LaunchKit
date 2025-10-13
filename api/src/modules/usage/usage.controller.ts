@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards, Post } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards, Headers, BadRequestException } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiSecurity, ApiBearerAuth } from '@nestjs/swagger';
 import { Public } from '../../common/decorators/public.decorator';
 import { ApiKeyGuard } from '../../common/guards/api-key.guard';
@@ -12,7 +12,6 @@ export class UsageController {
   constructor(private usageService: UsageService) {}
 
   // API Key endpoint
-  @Public()
   @Get()
   @UseGuards(ApiKeyGuard)
   @ApiSecurity('api-key')
@@ -26,12 +25,14 @@ export class UsageController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('jwt')
   @ApiOperation({ summary: 'Get current month usage (Dashboard)' })
-  async getCurrentUsage(@CurrentOrg() org: any) {
-    return this.usageService.getUsage(org.id);
+  async getCurrentUsage(@Headers('x-org-id') orgId?: string) {
+    if (!orgId) {
+      throw new BadRequestException('X-Org-Id header is required');
+    }
+    return this.usageService.getUsage(orgId);
   }
 
   // Check if organization can make more API calls
-  @Public()
   @Get('check-limit')
   @UseGuards(ApiKeyGuard)
   @ApiSecurity('api-key')
@@ -45,13 +46,17 @@ export class UsageController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('jwt')
   @ApiOperation({ summary: 'Get usage analytics for charts' })
-  async getAnalytics(@CurrentOrg() org: any, @Query('days') days?: string) {
+  async getAnalytics(@Headers('x-org-id') orgId?: string, @Query('days') days?: string) {
+    if (!orgId) {
+      throw new BadRequestException('X-Org-Id header is required');
+    }
+    
     const daysNum = parseInt(days || '30', 10);
     const endDate = new Date();
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - daysNum);
     
-    return this.usageService.getAnalytics(org.id, startDate, endDate);
+    return this.usageService.getAnalytics(orgId, startDate, endDate);
   }
 }
 

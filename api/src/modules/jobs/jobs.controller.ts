@@ -10,7 +10,6 @@ import { JobsService } from './jobs.service';
 export class JobsController {
   constructor(private jobsService: JobsService) {}
 
-  @Public()
   @Post('summarize')
   @UseGuards(ApiKeyGuard)
   @ApiSecurity('api-key')
@@ -19,7 +18,6 @@ export class JobsController {
     return this.jobsService.createJob(org.id, 'SUMMARIZE', data);
   }
 
-  @Public()
   @Get(':jobId')
   @UseGuards(ApiKeyGuard)
   @ApiSecurity('api-key')

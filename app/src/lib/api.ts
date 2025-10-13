@@ -44,6 +44,7 @@ apiClient.interceptors.response.use(
 );
 
 export default apiClient;
+export { apiClient }; // Also export as named export
 
 // API Functions
 export const api = {
