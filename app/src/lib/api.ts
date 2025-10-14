@@ -7,6 +7,10 @@ declare global {
   }
 }
 
+// Debug: Log the API URL being used
+console.log('🔧 NEXT_PUBLIC_API_URL:', process.env.NEXT_PUBLIC_API_URL);
+console.log('🔧 Final baseURL:', process.env.NEXT_PUBLIC_API_URL || 'https://launchkit-api-production.up.railway.app/v1');
+
 const apiClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://launchkit-api-production.up.railway.app/v1',
   headers: {
