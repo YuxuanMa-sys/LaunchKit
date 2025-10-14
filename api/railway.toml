@@ -6,3 +6,6 @@ dockerfilePath = "api/Dockerfile"
 startCommand = "node dist/main.js"
 healthcheckPath = "/v1/health/simple"
 healthcheckTimeout = 30
+
+[networking]
+port = 8080
