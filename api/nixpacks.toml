@@ -1,24 +1,16 @@
-[variables]
-NIXPACKS_NIXPKGS = "nodejs_18 pnpm"
-
 [phases.setup]
 nixPkgs = ['nodejs_18', 'pnpm']
 
 [phases.install]
 cmds = [
-  'pnpm install --no-frozen-lockfile'
+  'cd api && pnpm install --no-frozen-lockfile'
 ]
 
 [phases.build]
 cmds = [
-  'pnpm prisma generate',
-  'pnpm run build'
-]
-
-[phases.deploy]
-cmds = [
-  'pnpm prisma migrate deploy'
+  'cd api && pnpm prisma generate',
+  'cd api && pnpm run build'
 ]
 
 [start]
-cmd = 'PORT=$PORT node dist/main.js'
+cmd = 'cd api && PORT=$PORT node dist/main.js'
