@@ -9,12 +9,12 @@ cmds = ['pnpm install --frozen-lockfile']
 
 [phases.build]
 cmds = [
-  'pnpm build',
-  'echo "Build completed, checking .next directory:"',
-  'ls -la .next/',
+  'pnpm --filter launchkit-frontend build',
+  'echo "Build completed, checking app/.next directory:"',
+  'ls -la app/.next/',
   'echo "Checking for standalone directory:"',
-  'ls -la .next/standalone/ 2>/dev/null || echo "No standalone directory found"'
+  'ls -la app/.next/standalone/ 2>/dev/null || echo "No standalone directory found"'
 ]
 
 [start]
-cmd = 'pnpm start'
+cmd = 'cd app && pnpm start'
