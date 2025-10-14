@@ -18,12 +18,14 @@ COPY api/ ./api/
 
 # Generate Prisma client and build
 WORKDIR /app/api
-RUN pnpm prisma generate
-RUN pnpm run build
+RUN echo "Generating Prisma client..." && pnpm prisma generate
+RUN echo "Building application..." && pnpm run build
+RUN echo "Build completed, listing dist contents:" && ls -la dist/
 
 # Copy built files to root
 WORKDIR /app
-RUN cp -r api/dist ./dist
+RUN echo "Copying dist to root..." && cp -r api/dist ./dist
+RUN echo "Final root directory contents:" && ls -la
 
 # Expose port
 EXPOSE 3001
