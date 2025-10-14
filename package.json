@@ -22,7 +22,11 @@
     "db:studio": "cd api && pnpm prisma studio",
     "stripe:setup": "cd scripts && tsx stripe-setup.ts",
     "docker:up": "docker-compose up -d",
-    "docker:down": "docker-compose down"
+    "docker:down": "docker-compose down",
+    "railway:deploy": "./railway-deploy.sh",
+    "railway:migrate": "cd api && pnpm prisma migrate deploy",
+    "railway:seed": "cd api && pnpm prisma db seed",
+    "postinstall": "cd api && pnpm prisma generate"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
