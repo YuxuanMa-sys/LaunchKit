@@ -37,5 +37,12 @@ export class AppController {
       environment: process.env.NODE_ENV || 'development',
     };
   }
+
+  @Get('ping')
+  @ApiOperation({ summary: 'Simple ping endpoint' })
+  @ApiResponse({ status: 200, description: 'Service is responding' })
+  getPing() {
+    return { status: 'pong', timestamp: new Date().toISOString() };
+  }
 }
 

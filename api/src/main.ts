@@ -74,7 +74,13 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 
-  const port = process.env.PORT || 3001;
+  const port = parseInt(process.env.PORT || '3001', 10);
+  
+  console.log(`🔧 Starting server on port: ${port}`);
+  console.log(`🔧 PORT env var: ${process.env.PORT}`);
+  console.log(`🔧 NODE_ENV: ${process.env.NODE_ENV}`);
+  console.log(`🔧 RAILWAY_PUBLIC_DOMAIN: ${process.env.RAILWAY_PUBLIC_DOMAIN}`);
+  
   await app.listen(port, '0.0.0.0');
 
   const isProduction = process.env.NODE_ENV === 'production';
@@ -84,6 +90,7 @@ async function bootstrap() {
   
   console.log(`🚀 LaunchKit API running on ${isProduction ? `https://${host}` : host}`);
   console.log(`📚 API Docs: ${isProduction ? `https://${host}` : host}/api/docs`);
+  console.log(`✅ Server is listening on 0.0.0.0:${port}`);
 }
 
 bootstrap();
