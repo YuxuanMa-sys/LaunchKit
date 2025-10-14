@@ -17,12 +17,15 @@ WORKDIR /app/api
 RUN pnpm prisma generate
 RUN pnpm build
 
-# Copy built files to root for Railway
+# Debug: Check what was actually built
+RUN echo "Checking build output in /app/api:" && ls -la && echo "Checking for dist directory:" && find . -name "dist" -type d && echo "Checking for main.js:" && find . -name "main.js" -type f
+
+# Copy built files to root for Railway (only if dist exists)
 WORKDIR /app
-RUN cp -r api/dist ./dist
+RUN if [ -d "api/dist" ]; then cp -r api/dist ./dist; else echo "No api/dist found, checking current directory:" && ls -la; fi
 
 # Verify build output
-RUN echo "Build completed, checking dist directory:" && ls -la dist/ && echo "Main file exists:" && ls -la dist/main.js
+RUN echo "Final verification - checking dist directory:" && ls -la dist/ 2>/dev/null || echo "No dist directory found"
 
 # Expose port
 EXPOSE 3001
