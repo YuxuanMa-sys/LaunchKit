@@ -1,0 +1,10 @@
+[build]
+builder = "nixpacks"
+
+[deploy]
+startCommand = "pnpm start"
+healthcheckPath = "/"
+healthcheckTimeout = 60
+
+[build.nixpacks]
+nixpkgs = ["nodejs_18", "pnpm"]

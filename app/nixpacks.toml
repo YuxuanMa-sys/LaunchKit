@@ -1,3 +1,6 @@
+[variables]
+NIXPACKS_NIXPKGS = "nodejs_18 pnpm"
+
 [phases.setup]
 nixPkgs = ['nodejs_18', 'pnpm']
 
