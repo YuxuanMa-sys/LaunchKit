@@ -8,7 +8,7 @@ declare global {
 }
 
 const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/v1',
+  baseURL: process.env.NEXT_PUBLIC_API_URL || 'https://launchkit-api-production.up.railway.app/v1',
   headers: {
     'Content-Type': 'application/json',
   },

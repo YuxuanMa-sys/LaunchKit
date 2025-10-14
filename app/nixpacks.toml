@@ -5,7 +5,7 @@ NIXPACKS_NIXPKGS = "nodejs_18 pnpm"
 nixPkgs = ['nodejs_18', 'pnpm']
 
 [phases.install]
-cmds = ['pnpm install --no-frozen-lockfile']
+cmds = ['pnpm install --frozen-lockfile']
 
 [phases.build]
 cmds = ['pnpm build']
