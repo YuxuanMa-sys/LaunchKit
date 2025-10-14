@@ -23,6 +23,15 @@ export class QueueService implements OnModuleInit {
     console.log(`AI Jobs Queue: ${this.aiJobsQueue.name}`);
     console.log(`Webhooks Queue: ${this.webhooksQueue.name}`);
     
+    // Test DNS resolution first
+    try {
+      const dns = require('dns').promises;
+      await dns.lookup('redis-vomn.railway.internal');
+      console.log('✅ DNS resolution successful for redis-vomn.railway.internal');
+    } catch (error: any) {
+      console.error('❌ DNS resolution failed for redis-vomn.railway.internal:', error.message);
+    }
+    
     // Test Redis connection
     try {
       await this.aiJobsQueue.getWaitingCount();

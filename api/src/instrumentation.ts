@@ -31,7 +31,7 @@ const sdk = new NodeSDK({
         enabled: false,
       },
       '@opentelemetry/instrumentation-dns': {
-        enabled: false,
+        enabled: true, // Enable DNS for Railway internal networking
       },
       // Enable specific instrumentations we want
       '@opentelemetry/instrumentation-http': {
