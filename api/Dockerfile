@@ -22,7 +22,7 @@ RUN pnpm build
 WORKDIR /app
 RUN echo "Build completed successfully. Dist contents:" && ls -la dist/
 
-# Expose port
+# Expose port 3031
 EXPOSE 3001
 
 # Start the application
