@@ -1,0 +1,15 @@
+[phases.setup]
+nixPkgs = ['nodejs_18', 'pnpm']
+
+[phases.install]
+cmds = ['pnpm install --no-frozen-lockfile']
+
+[phases.build]
+cmds = [
+  'cd api && pnpm prisma generate',
+  'cd api && pnpm build',
+  'cd app && pnpm build'
+]
+
+[start]
+cmd = 'cd api && node dist/main.js'
