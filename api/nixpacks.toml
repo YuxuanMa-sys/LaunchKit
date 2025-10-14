@@ -3,12 +3,12 @@ nixPkgs = ['nodejs_18', 'pnpm']
 
 [phases.install]
 cmds = [
-  'cd api && pnpm install --no-frozen-lockfile'
+  'pnpm install --no-frozen-lockfile'
 ]
 
 [phases.build]
 cmds = [
-  'cd api && pnpm prisma generate',
+  'cd api && pnpm prisma generate --schema=./prisma/schema.prisma',
   'cd api && pnpm run build',
   'cp -r api/dist ./dist'
 ]
