@@ -1,8 +1,10 @@
 [build]
-builder = "dockerfile"
-dockerfilePath = "api/Dockerfile"
+builder = "nixpacks"
 
 [deploy]
 startCommand = "PORT=$PORT node dist/main.js"
 healthcheckPath = "/v1/health"
 healthcheckTimeout = 100
+
+[build.nixpacks]
+nixpkgs = ["nodejs_18", "pnpm"]
