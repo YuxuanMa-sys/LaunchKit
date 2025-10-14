@@ -9,7 +9,7 @@ cmds = [
 [phases.build]
 cmds = [
   'pnpm prisma generate',
-  'pnpm build'
+  'pnpm run build'
 ]
 
 [phases.deploy]
