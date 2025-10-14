@@ -14,4 +14,4 @@ cmds = [
 ]
 
 [start]
-cmd = 'cd api && pnpm prisma db push && node dist/main.js'
+cmd = 'pnpm prisma db push --schema=api/prisma/schema.prisma && node dist/main.js'
