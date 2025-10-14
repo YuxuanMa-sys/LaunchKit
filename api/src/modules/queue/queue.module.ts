@@ -28,6 +28,24 @@ import { TelemetryModule } from '../telemetry/telemetry.module';
             port: parseInt(url.port) || 6379,
             password: url.password || undefined,
             username: url.username || undefined,
+            // Add Railway-specific DNS configuration
+            family: 4, // Force IPv4 for Railway internal DNS
+            retryStrategy: (times: number) => {
+              // Retry connection with exponential backoff
+              if (times > 10) {
+                console.error(`Redis connection failed after ${times} attempts`);
+                return null; // Stop retrying
+              }
+              const delay = Math.min(times * 200, 2000);
+              console.log(`Redis retry attempt ${times}, waiting ${delay}ms`);
+              return delay;
+            },
+            enableReadyCheck: true,
+            maxRetriesPerRequest: null, // Required for BullMQ
+            // Add connection timeout
+            connectTimeout: 10000,
+            // Add keep alive
+            keepAlive: 30000,
           };
           
           console.log('Parsed Redis connection:', connection);
@@ -47,6 +65,14 @@ import { TelemetryModule } from '../telemetry/telemetry.module';
             host: configService.get('REDIS_HOST', 'localhost'),
             port: configService.get('REDIS_PORT', 6379),
             password: configService.get('REDIS_PASSWORD'),
+            family: 4,
+            retryStrategy: (times: number) => {
+              if (times > 10) return null;
+              return Math.min(times * 200, 2000);
+            },
+            maxRetriesPerRequest: null,
+            connectTimeout: 10000,
+            keepAlive: 30000,
           },
           defaultJobOptions: {
             removeOnComplete: 10,

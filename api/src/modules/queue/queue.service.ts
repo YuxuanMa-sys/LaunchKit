@@ -23,25 +23,68 @@ export class QueueService implements OnModuleInit {
     console.log(`AI Jobs Queue: ${this.aiJobsQueue.name}`);
     console.log(`Webhooks Queue: ${this.webhooksQueue.name}`);
     
-    // Test DNS resolution first
-    try {
-      const dns = require('dns').promises;
-      await dns.lookup('redis-vomn.railway.internal');
-      console.log('✅ DNS resolution successful for redis-vomn.railway.internal');
-    } catch (error: any) {
-      console.error('❌ DNS resolution failed for redis-vomn.railway.internal:', error.message);
-    }
+    // Add Redis connection event listeners
+    const client = await this.aiJobsQueue.client;
     
-    // Test Redis connection
+    client.on('connect', () => {
+      console.log('✅ Redis client connected');
+    });
+    
+    client.on('ready', () => {
+      console.log('✅ Redis client ready');
+    });
+    
+    client.on('error', (error) => {
+      console.error('❌ Redis client error:', error.message);
+    });
+    
+    client.on('close', () => {
+      console.log('⚠️  Redis client closed');
+    });
+    
+    client.on('reconnecting', (delay: number) => {
+      console.log(`🔄 Redis client reconnecting in ${delay}ms...`);
+    });
+    
+    // Log connection configuration
+    const options = client.options as any; // Cast to any to access connection properties
+    console.log('Redis connection config:', {
+      host: options.host,
+      port: options.port,
+      family: options.family,
+    });
+    
+    // Wait for connection to be ready with retries
     try {
-      console.log('Testing Redis connection...');
-      console.log('Queue connection options:', this.aiJobsQueue.opts?.connection);
-      await this.aiJobsQueue.getWaitingCount();
-      console.log('✅ Redis connection successful');
+      console.log('Waiting for Redis connection...');
+      
+      // Give it up to 30 seconds to connect
+      const timeout = 30000;
+      const startTime = Date.now();
+      
+      while (Date.now() - startTime < timeout) {
+        try {
+          await this.aiJobsQueue.getWaitingCount();
+          console.log('✅ Redis connection successful');
+          return;
+        } catch (error: any) {
+          if (error.code === 'ENOTFOUND' || error.message.includes('ENOTFOUND')) {
+            console.log(`⏳ Waiting for DNS resolution... (${Math.floor((Date.now() - startTime) / 1000)}s elapsed)`);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          } else {
+            throw error;
+          }
+        }
+      }
+      
+      console.error('❌ Redis connection timeout after 30 seconds');
     } catch (error: any) {
       console.error('❌ Redis connection failed:', error.message);
-      console.error('Error code:', error.code);
-      console.error('Error syscall:', error.syscall);
+      console.error('Error details:', {
+        code: error.code,
+        syscall: error.syscall,
+        hostname: error.hostname,
+      });
     }
   }
 
