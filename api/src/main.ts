@@ -74,7 +74,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 
-  const port = 3001; // Force port 3001 for Railway
+  const port = parseInt(process.env.PORT || '8080', 10);
   
   console.log(`🔧 Starting server on port: ${port}`);
   console.log(`🔧 PORT env var: ${process.env.PORT}`);

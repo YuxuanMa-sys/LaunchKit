@@ -8,4 +8,4 @@ healthcheckPath = "/v1/ping"
 healthcheckTimeout = 60
 
 [networking]
-port = 3001
+port = 8080

@@ -23,7 +23,7 @@ WORKDIR /app
 RUN echo "Build completed successfully. Dist contents:" && ls -la dist/
 
 # Expose port
-EXPOSE 3001
+EXPOSE 8080
 
 # Start the application
 CMD ["node", "dist/main.js"]

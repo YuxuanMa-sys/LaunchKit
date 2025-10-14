@@ -12,6 +12,6 @@
     "restartPolicyMaxRetries": 10
   },
   "networking": {
-    "port": 3001
+    "port": 8080
   }
 }
