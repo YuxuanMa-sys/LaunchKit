@@ -34,10 +34,14 @@ export class QueueService implements OnModuleInit {
     
     // Test Redis connection
     try {
+      console.log('Testing Redis connection...');
+      console.log('Queue connection options:', this.aiJobsQueue.opts?.connection);
       await this.aiJobsQueue.getWaitingCount();
       console.log('✅ Redis connection successful');
     } catch (error: any) {
       console.error('❌ Redis connection failed:', error.message);
+      console.error('Error code:', error.code);
+      console.error('Error syscall:', error.syscall);
     }
   }
 
