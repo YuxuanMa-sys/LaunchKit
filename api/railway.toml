@@ -3,6 +3,6 @@ builder = "dockerfile"
 dockerfilePath = "api/Dockerfile"
 
 [deploy]
-startCommand = "echo 'Starting API server...' && ls -la dist/ && PORT=$PORT node dist/main.js"
+startCommand = "node dist/main.js"
 healthcheckPath = "/v1/health"
 healthcheckTimeout = 100
