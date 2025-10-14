@@ -2,15 +2,19 @@
 nixPkgs = ['nodejs_18', 'pnpm']
 
 [phases.install]
-cmds = ['pnpm install --no-frozen-lockfile']
+cmds = [
+  'echo "Installing API dependencies..."',
+  'pnpm install --no-frozen-lockfile',
+  'echo "Dependencies installed"'
+]
 
 [phases.build]
 cmds = [
   'echo "Building API..."',
-  'pnpm --filter api exec prisma generate',
-  'pnpm --filter api build',
+  'pnpm prisma generate',
+  'pnpm build',
   'echo "API build complete"'
 ]
 
 [start]
-cmd = 'cd api && node dist/main.js'
+cmd = 'node dist/main.js'

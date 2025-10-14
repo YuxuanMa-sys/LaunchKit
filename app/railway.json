@@ -5,7 +5,7 @@
     "dockerfilePath": null
   },
   "deploy": {
-    "startCommand": "pnpm --filter app start",
+    "startCommand": "pnpm start",
     "healthcheckPath": "/",
     "healthcheckTimeout": 60,
     "restartPolicyType": "ON_FAILURE",

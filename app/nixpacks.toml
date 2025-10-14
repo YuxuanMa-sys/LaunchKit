@@ -2,10 +2,18 @@
 nixPkgs = ['nodejs_18', 'pnpm']
 
 [phases.install]
-cmds = ['pnpm install --no-frozen-lockfile']
+cmds = [
+  'echo "Installing frontend dependencies..."',
+  'pnpm install --no-frozen-lockfile',
+  'echo "Dependencies installed"'
+]
 
 [phases.build]
-cmds = ['pnpm --filter app build']
+cmds = [
+  'echo "Building frontend..."',
+  'pnpm build',
+  'echo "Frontend build complete"'
+]
 
 [start]
-cmd = 'pnpm --filter app start'
+cmd = 'pnpm start'

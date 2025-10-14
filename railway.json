@@ -5,7 +5,7 @@
     "dockerfilePath": null
   },
   "deploy": {
-    "startCommand": "cd api && PORT=$PORT node dist/main.js",
+    "startCommand": "PORT=$PORT node dist/main.js",
     "healthcheckPath": "/health/simple",
     "healthcheckTimeout": 60,
     "restartPolicyType": "ON_FAILURE",
