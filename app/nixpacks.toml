@@ -8,7 +8,13 @@ nixPkgs = ['nodejs_18', 'pnpm']
 cmds = ['pnpm install --frozen-lockfile']
 
 [phases.build]
-cmds = ['pnpm build']
+cmds = [
+  'pnpm build',
+  'echo "Build completed, checking .next directory:"',
+  'ls -la .next/',
+  'echo "Checking for standalone directory:"',
+  'ls -la .next/standalone/ 2>/dev/null || echo "No standalone directory found"'
+]
 
 [start]
-cmd = 'node .next/standalone/server.js'
+cmd = 'pnpm start'

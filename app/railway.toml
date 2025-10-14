@@ -2,7 +2,7 @@
 builder = "nixpacks"
 
 [deploy]
-startCommand = "node .next/standalone/server.js"
+startCommand = "pnpm start"
 healthcheckPath = "/"
 healthcheckTimeout = 60
 
