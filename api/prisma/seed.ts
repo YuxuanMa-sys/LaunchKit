@@ -67,7 +67,7 @@ async function main() {
     {
       id: 'key_demo_primary',
       name: 'Primary API Key',
-      hashedKey: await hash(demoKey1, 10),
+      hashedKey: await hash(demoKey1, 12),
       prefix: 'lk_test_pk_demo1234',
       orgId: 'org_demo_startup',
       revokedAt: null, // null means active
@@ -75,7 +75,7 @@ async function main() {
     {
       id: 'key_demo_secondary',
       name: 'Secondary API Key',
-      hashedKey: await hash(demoKey2, 10),
+      hashedKey: await hash(demoKey2, 12),
       prefix: 'lk_test_pk_demo5678',
       orgId: 'org_demo_startup',
       revokedAt: null, // null means active
@@ -83,7 +83,7 @@ async function main() {
     {
       id: 'key_enterprise_primary',
       name: 'Enterprise Primary Key',
-      hashedKey: await hash(enterpriseKey, 10),
+      hashedKey: await hash(enterpriseKey, 12),
       prefix: 'lk_test_pk_entr9012',
       orgId: 'org_enterprise_corp',
       revokedAt: null, // null means active

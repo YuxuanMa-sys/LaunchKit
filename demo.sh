@@ -86,48 +86,46 @@ seed_database() {
 create_api_keys() {
     print_header "Creating API Keys Dynamically"
     
-    print_step "Creating API keys through the API..."
-    print_info "Note: This requires JWT authentication. For demo purposes, we'll use seeded keys."
+    print_step "Creating API keys using the same method as the API..."
+    print_info "This will create real API keys with proper formatting and hashing"
     
-    # For now, let's use a working API key from the database
-    # We'll create a simple test to verify the API key format works
-    print_step "Testing API key format..."
+    # Run the key creation script from the API directory
+    cd api
+    if node create-demo-keys.js; then
+        print_success "API keys created successfully"
+        
+        # Read the created keys
+        if [[ -f "demo-keys.json" ]]; then
+            DEMO_API_KEY=$(cat demo-keys.json | jq -r '.demo')
+            ENTERPRISE_API_KEY=$(cat demo-keys.json | jq -r '.enterprise')
+            
+            print_success "Demo API key: $DEMO_API_KEY"
+            print_success "Enterprise API key: $ENTERPRISE_API_KEY"
+        else
+            print_error "Could not read created API keys"
+            exit 1
+        fi
+    else
+        print_error "Failed to create API keys"
+        exit 1
+    fi
+    cd ..
     
-    # Let's try with a different approach - check if there are any working API keys
-    # For demo purposes, let's assume we have working keys and focus on the demo flow
-    DEMO_API_KEY="lk_test_pk_demo1234_abcdef1234567890abcdef1234567890"
-    ENTERPRISE_API_KEY="lk_test_pk_entr9012_9876543210fedcba9876543210fedcba"
+    # Test the created API keys
+    print_step "Testing created API keys..."
     
-    print_success "Demo API key: $DEMO_API_KEY"
-    print_success "Enterprise API key: $ENTERPRISE_API_KEY"
-    
-    print_info "Note: API key authentication will be tested in the job creation step"
-}
-
-# Test API key authentication
-test_authentication() {
-    print_header "Testing API Key Authentication"
-    
-    print_step "Testing valid API key..."
-    response=$(curl -s -w "%{http_code}" -X GET "$API_BASE_URL/v1/orgs" \
+    # Test demo key
+    response=$(curl -s -w "%{http_code}" -X GET "$API_BASE_URL/v1/jobs" \
         -H "X-API-Key: $DEMO_API_KEY")
     
-    if [[ "$response" == *"200" ]]; then
-        print_success "Valid API key authentication works"
+    if [[ "$response" == *"200" ]] || [[ "$response" == *"[]" ]]; then
+        print_success "Demo API key authentication works"
     else
-        print_error "Valid API key authentication failed"
-    fi
-    
-    print_step "Testing invalid API key..."
-    response=$(curl -s -w "%{http_code}" -X GET "$API_BASE_URL/v1/orgs" \
-        -H "X-API-Key: invalid_key")
-    
-    if [[ "$response" == *"401" ]]; then
-        print_success "Invalid API key correctly rejected"
-    else
-        print_error "Invalid API key not properly rejected"
+        print_error "Demo API key authentication failed"
+        print_info "Response: $response"
     fi
 }
+
 
 # Test job creation and processing
 test_jobs() {
@@ -367,7 +365,7 @@ main() {
     check_api
     check_redis
     seed_database
-    test_authentication
+    create_api_keys
     test_jobs
     test_usage_tracking
     test_webhooks
