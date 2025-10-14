@@ -22,6 +22,14 @@ export class QueueService implements OnModuleInit {
     console.log('QueueService initialized');
     console.log(`AI Jobs Queue: ${this.aiJobsQueue.name}`);
     console.log(`Webhooks Queue: ${this.webhooksQueue.name}`);
+    
+    // Test Redis connection
+    try {
+      await this.aiJobsQueue.getWaitingCount();
+      console.log('✅ Redis connection successful');
+    } catch (error: any) {
+      console.error('❌ Redis connection failed:', error.message);
+    }
   }
 
   /**

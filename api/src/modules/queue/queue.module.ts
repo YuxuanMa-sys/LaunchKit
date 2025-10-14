@@ -19,7 +19,14 @@ import { TelemetryModule } from '../telemetry/telemetry.module';
         
         if (redisUrl) {
           console.log('Using REDIS_URL for connection');
-          return { connection: redisUrl };
+          console.log('Redis URL length:', redisUrl.length);
+          return { 
+            connection: redisUrl,
+            defaultJobOptions: {
+              removeOnComplete: 10,
+              removeOnFail: 5,
+            },
+          };
         }
         
         console.log('Falling back to individual Redis config');
@@ -28,6 +35,10 @@ import { TelemetryModule } from '../telemetry/telemetry.module';
             host: configService.get('REDIS_HOST', 'localhost'),
             port: configService.get('REDIS_PORT', 6379),
             password: configService.get('REDIS_PASSWORD'),
+          },
+          defaultJobOptions: {
+            removeOnComplete: 10,
+            removeOnFail: 5,
           },
         };
       },
