@@ -11,4 +11,4 @@ cmds = ['pnpm install --frozen-lockfile']
 cmds = ['pnpm build']
 
 [start]
-cmd = 'pnpm start'
+cmd = 'node .next/standalone/server.js'

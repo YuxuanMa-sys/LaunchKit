@@ -22,4 +22,4 @@ RUN pnpm build
 EXPOSE 3000
 
 # Start the application
-CMD ["pnpm", "start"]
+CMD ["node", ".next/standalone/server.js"]
