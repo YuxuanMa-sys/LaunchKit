@@ -3,7 +3,7 @@ builder = "dockerfile"
 dockerfilePath = "api/Dockerfile"
 
 [deploy]
-startCommand = "pnpm prisma migrate deploy && node dist/main.js"
+startCommand = "cd api && pnpm prisma db push && node dist/main.js"
 healthcheckPath = "/v1/ping"
 healthcheckTimeout = 60
 
