@@ -3,6 +3,9 @@ FROM node:18-alpine
 # Install pnpm
 RUN npm install -g pnpm
 
+# Cache busting - force fresh build
+RUN echo "Build timestamp: $(date)" > /tmp/build-timestamp
+
 # Set working directory
 WORKDIR /app
 
@@ -15,7 +18,7 @@ RUN pnpm install --no-frozen-lockfile
 # Generate Prisma client and build
 WORKDIR /app/api
 RUN echo "Generating Prisma client..." && pnpm prisma generate
-RUN echo "Building application with TypeScript..." && (npx tsc --verbose || echo "TypeScript compilation failed, checking for errors...")
+RUN echo "Building application with TypeScript..." && echo "Current directory: $(pwd)" && echo "TypeScript config exists:" && ls -la tsconfig.json && (npx tsc --verbose || echo "TypeScript compilation failed, checking for errors...")
 RUN echo "Checking if dist was created..." && ls -la dist/ 2>/dev/null || echo "No dist directory found"
 RUN echo "Build completed, listing current directory:" && ls -la
 RUN echo "Looking for any compiled files..." && find . -name "*.js" -type f
