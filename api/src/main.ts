@@ -77,8 +77,13 @@ async function bootstrap() {
   const port = process.env.PORT || 3001;
   await app.listen(port);
 
-  console.log(`🚀 LaunchKit API running on http://localhost:${port}`);
-  console.log(`📚 API Docs: http://localhost:${port}/api/docs`);
+  const isProduction = process.env.NODE_ENV === 'production';
+  const host = isProduction 
+    ? process.env.RAILWAY_PUBLIC_DOMAIN || process.env.RAILWAY_STATIC_URL || 'production'
+    : `http://localhost:${port}`;
+  
+  console.log(`🚀 LaunchKit API running on ${isProduction ? `https://${host}` : host}`);
+  console.log(`📚 API Docs: ${isProduction ? `https://${host}` : host}/api/docs`);
 }
 
 bootstrap();
