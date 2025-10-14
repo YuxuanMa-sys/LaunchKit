@@ -10,6 +10,7 @@ cmds = [
 
 [phases.build]
 cmds = [
+<<<<<<< HEAD
   'echo "Building API..."',
   'pnpm prisma generate',
   'pnpm build',
@@ -18,3 +19,16 @@ cmds = [
 
 [start]
 cmd = 'node dist/main.js'
+=======
+  'pnpm --filter api exec prisma generate',
+  'pnpm --filter api build'
+]
+
+[phases.deploy]
+cmds = [
+  'cd api && pnpm prisma migrate deploy'
+]
+
+[start]
+cmd = 'cd api && PORT=$PORT node dist/main.js'
+>>>>>>> api-deployment
