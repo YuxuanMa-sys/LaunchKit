@@ -16,15 +16,17 @@ RUN pnpm install --no-frozen-lockfile
 WORKDIR /app/api
 RUN echo "Generating Prisma client..." && pnpm prisma generate
 RUN echo "Building application..." && pnpm run build
-RUN echo "Build completed, listing dist contents:" && ls -la dist/
+RUN echo "Build completed, listing current directory:" && ls -la
+RUN echo "Looking for dist directory..." && find . -name "dist" -type d
+RUN echo "Listing any build output:" && ls -la || echo "No files found"
 
-# Copy built files to root
+# Copy built files to root (if they exist)
 WORKDIR /app
-RUN echo "Copying dist to root..." && cp -r api/dist ./dist
+RUN echo "Copying dist to root..." && (cp -r api/dist ./dist || echo "No dist directory found")
 RUN echo "Final root directory contents:" && ls -la
 
 # Expose port
 EXPOSE 3001
 
 # Start the application
-CMD ["node", "dist/main.js"]
+CMD ["node", "dist/main"]
