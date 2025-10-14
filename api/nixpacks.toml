@@ -9,8 +9,9 @@ cmds = [
 [phases.build]
 cmds = [
   'cd api && pnpm prisma generate',
-  'cd api && pnpm run build'
+  'cd api && pnpm run build',
+  'cp -r api/dist ./dist'
 ]
 
 [start]
-cmd = 'cd api && PORT=$PORT node dist/main.js'
+cmd = 'PORT=$PORT node dist/main.js'
