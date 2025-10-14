@@ -20,8 +20,20 @@ import { TelemetryModule } from '../telemetry/telemetry.module';
         if (redisUrl) {
           console.log('Using REDIS_URL for connection');
           console.log('Redis URL length:', redisUrl.length);
+          
+          // Parse the Redis URL manually
+          const url = new URL(redisUrl);
+          const connection = {
+            host: url.hostname,
+            port: parseInt(url.port) || 6379,
+            password: url.password || undefined,
+            username: url.username || undefined,
+          };
+          
+          console.log('Parsed Redis connection:', connection);
+          
           return { 
-            connection: redisUrl,
+            connection,
             defaultJobOptions: {
               removeOnComplete: 10,
               removeOnFail: 5,
