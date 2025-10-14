@@ -6,8 +6,8 @@
   },
   "deploy": {
     "startCommand": "cd api && PORT=$PORT node dist/main.js",
-    "healthcheckPath": "/health",
-    "healthcheckTimeout": 300,
+    "healthcheckPath": "/health/simple",
+    "healthcheckTimeout": 60,
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }

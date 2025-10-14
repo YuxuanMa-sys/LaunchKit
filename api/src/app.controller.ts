@@ -25,5 +25,17 @@ export class AppController {
   getHealth() {
     return this.appService.getHealth();
   }
+
+  @Get('health/simple')
+  @ApiOperation({ summary: 'Simple health check (no database)' })
+  @ApiResponse({ status: 200, description: 'Service is running' })
+  getSimpleHealth() {
+    return {
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      environment: process.env.NODE_ENV || 'development',
+    };
+  }
 }
 
