@@ -1,7 +1,7 @@
 FROM node:18-alpine
 
-# Install pnpm
-RUN npm install -g pnpm
+# Install pnpm and OpenSSL for Prisma
+RUN apk add --no-cache openssl1.1-compat && npm install -g pnpm
 
 # Set working directory
 WORKDIR /app
@@ -17,15 +17,12 @@ WORKDIR /app/api
 RUN pnpm prisma generate
 RUN pnpm build
 
-# Debug: Check what was actually built
-RUN echo "Checking build output in /app/api:" && ls -la && echo "Checking for dist directory:" && find . -name "dist" -type d && echo "Checking for main.js:" && find . -name "main.js" -type f
-
-# Copy built files to root for Railway (only if dist exists)
+# Copy built files to root for Railway
 WORKDIR /app
-RUN if [ -d "api/dist" ]; then cp -r api/dist ./dist; else echo "No api/dist found, checking current directory:" && ls -la; fi
+RUN cp -r api/dist ./dist
 
 # Verify build output
-RUN echo "Final verification - checking dist directory:" && ls -la dist/ 2>/dev/null || echo "No dist directory found"
+RUN echo "Build completed successfully. Dist contents:" && ls -la dist/
 
 # Expose port
 EXPOSE 3001
