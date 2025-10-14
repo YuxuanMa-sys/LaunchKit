@@ -47,9 +47,9 @@ The demo creates comprehensive sample data:
 - **Enterprise User** (`enterprise@launchkit.com`) → **Enterprise Corp** (ENTERPRISE plan)
 
 #### API Keys
-- `lk_demo_1234567890abcdef` (Demo Startup - Primary)
-- `lk_demo_abcdef1234567890` (Demo Startup - Secondary)
-- `lk_enterprise_xyz789abc123` (Enterprise Corp - Primary)
+- `lk_demo_pk_abc123_secret456` (Demo Startup - Primary)
+- `lk_demo_pk_def456_secret789` (Demo Startup - Secondary)
+- `lk_enterprise_pk_xyz789_secret123` (Enterprise Corp - Primary)
 
 #### Sample Jobs
 - **Summarize Job**: Text summarization with AI
@@ -73,7 +73,7 @@ The demo creates comprehensive sample data:
 #### 1. API Key Authentication
 ```bash
 # Valid API key
-curl -H "X-API-Key: lk_demo_1234567890abcdef" http://localhost:3001/v1/orgs
+curl -H "X-API-Key: lk_demo_pk_abc123_secret456" http://localhost:3001/v1/orgs
 
 # Invalid API key (should return 401)
 curl -H "X-API-Key: invalid_key" http://localhost:3001/v1/orgs
@@ -83,24 +83,24 @@ curl -H "X-API-Key: invalid_key" http://localhost:3001/v1/orgs
 ```bash
 # Create a summarize job
 curl -X POST http://localhost:3001/v1/jobs/summarize \
-  -H "X-API-Key: lk_demo_1234567890abcdef" \
+  -H "X-API-Key: lk_demo_pk_abc123_secret456" \
   -H "Content-Type: application/json" \
   -d '{"text": "Your text to summarize here"}'
 
 # Check job status
-curl -H "X-API-Key: lk_demo_1234567890abcdef" \
+curl -H "X-API-Key: lk_demo_pk_abc123_secret456" \
   http://localhost:3001/v1/jobs/{job_id}
 ```
 
 #### 3. Usage Tracking
 ```bash
 # Check current usage
-curl -H "X-API-Key: lk_demo_1234567890abcdef" \
+curl -H "X-API-Key: lk_demo_pk_abc123_secret456" \
   -H "X-Org-Id: org_demo_startup" \
   http://localhost:3001/v1/usage/current
 
 # Get usage analytics
-curl -H "X-API-Key: lk_demo_1234567890abcdef" \
+curl -H "X-API-Key: lk_demo_pk_abc123_secret456" \
   -H "X-Org-Id: org_demo_startup" \
   http://localhost:3001/v1/usage/analytics
 ```

@@ -58,29 +58,33 @@ async function main() {
 
   console.log('✅ Created sample organizations');
 
-  // Create sample API keys
+  // Create sample API keys with correct format: lk_test_pk_<8chars>_<32chars>
+  const demoKey1 = 'lk_test_pk_demo1234_abcdef1234567890abcdef1234567890';
+  const demoKey2 = 'lk_test_pk_demo5678_1234567890abcdef1234567890abcdef';
+  const enterpriseKey = 'lk_test_pk_entr9012_9876543210fedcba9876543210fedcba';
+  
   const apiKeys = [
     {
       id: 'key_demo_primary',
       name: 'Primary API Key',
-      hashedKey: await hash('lk_demo_1234567890abcdef', 10),
-      prefix: 'lk_demo_1234',
+      hashedKey: await hash(demoKey1, 10),
+      prefix: 'lk_test_pk_demo1234',
       orgId: 'org_demo_startup',
       revokedAt: null, // null means active
     },
     {
       id: 'key_demo_secondary',
       name: 'Secondary API Key',
-      hashedKey: await hash('lk_demo_abcdef1234567890', 10),
-      prefix: 'lk_demo_abcd',
+      hashedKey: await hash(demoKey2, 10),
+      prefix: 'lk_test_pk_demo5678',
       orgId: 'org_demo_startup',
       revokedAt: null, // null means active
     },
     {
       id: 'key_enterprise_primary',
       name: 'Enterprise Primary Key',
-      hashedKey: await hash('lk_enterprise_xyz789abc123', 10),
-      prefix: 'lk_enterprise_xyz7',
+      hashedKey: await hash(enterpriseKey, 10),
+      prefix: 'lk_test_pk_entr9012',
       orgId: 'org_enterprise_corp',
       revokedAt: null, // null means active
     },
@@ -358,9 +362,9 @@ async function main() {
   console.log('  • Billing records for both organizations');
   console.log('');
   console.log('🔑 Demo API Keys:');
-  console.log('  • lk_demo_1234567890abcdef (Demo Startup)');
-  console.log('  • lk_demo_abcdef1234567890 (Demo Startup)');
-  console.log('  • lk_enterprise_xyz789abc123 (Enterprise Corp)');
+  console.log('  • ' + demoKey1 + ' (Demo Startup)');
+  console.log('  • ' + demoKey2 + ' (Demo Startup)');
+  console.log('  • ' + enterpriseKey + ' (Enterprise Corp)');
   console.log('');
   console.log('🌐 Demo Webhook URLs:');
   console.log('  • https://webhook.site/unique-id-123 (Demo Startup)');
