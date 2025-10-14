@@ -46,7 +46,7 @@ const sdk = new NodeSDK({
         enabled: true,
       },
       '@opentelemetry/instrumentation-ioredis': {
-        enabled: true,
+        enabled: false, // Disabled to prevent Redis connection conflicts
       },
     }),
   ],
