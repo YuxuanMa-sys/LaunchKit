@@ -1,6 +1,0 @@
-packages:
-  - 'app'
-  - 'api'
-  - 'workers'
-  - 'scripts'
-
