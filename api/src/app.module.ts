@@ -14,6 +14,7 @@ import { BillingModule } from './modules/billing/billing.module';
 import { WebhooksModule } from './modules/webhooks/webhooks.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { QueueModule } from './modules/queue/queue.module';
+import { TelemetryModule } from './modules/telemetry/telemetry.module';
 
 @Module({
   imports: [
@@ -31,20 +32,21 @@ import { QueueModule } from './modules/queue/queue.module';
       },
     ]),
 
-    // Infrastructure
-    PrismaModule,
-    QueueModule, // BullMQ job queue
+        // Infrastructure
+        PrismaModule,
+        QueueModule, // BullMQ job queue
+        TelemetryModule, // OpenTelemetry observability
 
-    // Feature modules
-    AuthModule,
-    OrgsModule,
-    MembersModule,
-    ApiKeysModule,
-    JobsModule,
-    UsageModule,
-    BillingModule,
-    WebhooksModule,
-    AuditModule,
+        // Feature modules
+        AuthModule,
+        OrgsModule,
+        MembersModule,
+        ApiKeysModule,
+        JobsModule,
+        UsageModule,
+        BillingModule,
+        WebhooksModule,
+        AuditModule,
   ],
   controllers: [AppController],
   providers: [AppService],

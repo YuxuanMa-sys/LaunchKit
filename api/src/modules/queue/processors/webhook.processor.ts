@@ -2,6 +2,7 @@ import { Processor, WorkerHost, OnWorkerEvent } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { Logger, Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
+import { TelemetryService } from '../../telemetry/telemetry.service';
 import axios, { AxiosError } from 'axios';
 
 export interface WebhookPayload {
@@ -18,16 +19,29 @@ export interface WebhookPayload {
 export class WebhookProcessor extends WorkerHost {
   private readonly logger = new Logger(WebhookProcessor.name);
 
-  constructor(private prisma: PrismaService) {
+  constructor(
+    private prisma: PrismaService,
+    private telemetryService: TelemetryService,
+  ) {
     super();
   }
 
   async process(job: Job<WebhookPayload>): Promise<any> {
     const { webhookId, url, event, data } = job.data;
+    const startTime = Date.now();
 
     this.logger.log(`Delivering webhook ${webhookId} to ${url} (event: ${event})`);
 
+    // Create telemetry span for webhook delivery
+    const span = this.telemetryService.createWebhookSpan(webhookId, url, event);
+
     try {
+      span.addEvent('webhook.delivery.started', {
+        webhook_id: webhookId,
+        event: event,
+        attempt: job.attemptsMade + 1,
+      });
+
       // Get webhook endpoint details
       const endpoint = await this.prisma.webhookEndpoint.findUnique({
         where: { id: webhookId },
@@ -40,6 +54,10 @@ export class WebhookProcessor extends WorkerHost {
       if (!endpoint.enabled) {
         throw new Error(`Webhook endpoint ${webhookId} is disabled`);
       }
+
+      span.addEvent('webhook.delivery.endpoint_validated', {
+        enabled: endpoint.enabled.toString(),
+      });
 
       // Generate signature
       const payload = JSON.stringify(data);
@@ -54,8 +72,12 @@ export class WebhookProcessor extends WorkerHost {
         'User-Agent': 'LaunchKit-Webhook/1.0',
       };
 
+      span.addEvent('webhook.delivery.request_prepared', {
+        payload_size: payload.length,
+        signature_length: signature.length,
+      });
+
       // Make HTTP request
-      const startTime = Date.now();
       const response = await axios.post(url, data, {
         headers,
         timeout: 30000, // 30 second timeout
@@ -63,6 +85,11 @@ export class WebhookProcessor extends WorkerHost {
       });
 
       const duration = Date.now() - startTime;
+
+      span.addEvent('webhook.delivery.http_completed', {
+        status_code: response.status,
+        response_size: JSON.stringify(response.data || {}).length,
+      });
 
       // Record successful delivery
       const delivery = await this.prisma.webhookDelivery.create({
@@ -85,9 +112,21 @@ export class WebhookProcessor extends WorkerHost {
         data: { lastDeliveryAt: new Date() },
       });
 
+      // Record telemetry metrics
+      this.telemetryService.recordWebhookMetrics(event, duration / 1000, true, response.status);
+
+      span.setAttributes({
+        'webhook.duration_ms': duration,
+        'webhook.status_code': response.status,
+        'webhook.attempt': job.attemptsMade + 1,
+        'webhook.delivery_id': delivery.id,
+      });
+
       this.logger.log(
         `Webhook ${webhookId} delivered successfully (${response.status}) in ${duration}ms`,
       );
+
+      span.setStatus({ code: 1, message: 'Webhook delivered successfully' });
 
       return {
         success: true,
@@ -97,12 +136,18 @@ export class WebhookProcessor extends WorkerHost {
         attempt: job.attemptsMade + 1,
       };
     } catch (error: any) {
-      const duration = Date.now() - Date.now();
+      const duration = Date.now() - startTime;
       
       this.logger.error(`Webhook ${webhookId} delivery failed: ${error.message}`);
 
       // Determine if this is a retryable error
       const isRetryable = this.isRetryableError(error);
+
+      span.addEvent('webhook.delivery.failed', {
+        error: error.message,
+        retryable: isRetryable.toString(),
+        status_code: error.response?.status || 'unknown',
+      });
 
       // Record failed delivery
       const delivery = await this.prisma.webhookDelivery.create({
@@ -133,8 +178,23 @@ export class WebhookProcessor extends WorkerHost {
         });
       }
 
+      // Record telemetry metrics for failed webhook
+      this.telemetryService.recordWebhookMetrics(event, duration / 1000, false, error.response?.status);
+
+      span.setAttributes({
+        'webhook.duration_ms': duration,
+        'webhook.error': error.message,
+        'webhook.retryable': isRetryable,
+        'webhook.status_code': error.response?.status || 0,
+        'webhook.attempt': job.attemptsMade + 1,
+      });
+
+      this.telemetryService.setSpanError(error, `Webhook ${webhookId} delivery failed`);
+
       // Re-throw error to trigger BullMQ retry mechanism
       throw error;
+    } finally {
+      span.end();
     }
   }
 

@@ -4,6 +4,7 @@ import { Logger } from '@nestjs/common';
 import { PrismaService } from '../../../infra/prisma/prisma.service';
 import { UsageService } from '../../usage/usage.service';
 import { WebhooksService } from '../../webhooks/webhooks.service';
+import { TelemetryService } from '../../telemetry/telemetry.service';
 import { JobStatus, JobType } from '@prisma/client';
 import { JobPayload } from '../queue.service';
 
@@ -17,16 +18,26 @@ export class AIJobsProcessor extends WorkerHost {
     private prisma: PrismaService,
     private usageService: UsageService,
     private webhooksService: WebhooksService,
+    private telemetryService: TelemetryService,
   ) {
     super();
   }
 
   async process(job: Job<JobPayload>): Promise<any> {
     const { jobId, orgId, type, input } = job.data;
+    const startTime = Date.now();
 
     this.logger.log(`Processing job ${jobId} of type ${type} for org ${orgId}`);
 
+    // Create telemetry span for job processing
+    const span = this.telemetryService.createJobSpan(type, jobId, orgId);
+
     try {
+      span.addEvent('job.processing.started', {
+        job_type: type,
+        org_id: orgId,
+      });
+
       // Update job status to PROCESSING
       await this.prisma.job.update({
         where: { id: jobId },
@@ -34,6 +45,10 @@ export class AIJobsProcessor extends WorkerHost {
           status: JobStatus.PROCESSING,
           startedAt: new Date(),
         },
+      });
+
+      span.addEvent('job.processing.status_updated', {
+        status: 'PROCESSING',
       });
 
       // Process based on job type
@@ -70,6 +85,11 @@ export class AIJobsProcessor extends WorkerHost {
           throw new Error(`Unknown job type: ${type}`);
       }
 
+      span.addEvent('job.processing.ai_completed', {
+        tokens_used: tokensUsed,
+        result_size: JSON.stringify(result).length,
+      });
+
       // Calculate cost (example: $0.001 per 1000 tokens)
       const costCents = Math.ceil((tokensUsed / 1000) * 0.1);
 
@@ -85,6 +105,11 @@ export class AIJobsProcessor extends WorkerHost {
         },
       });
 
+      span.addEvent('job.processing.database_updated', {
+        status: 'SUCCEEDED',
+        cost_cents: costCents,
+      });
+
       // Record token usage
       if (tokensUsed > 0) {
         await this.usageService.recordUsage(orgId, {
@@ -92,6 +117,16 @@ export class AIJobsProcessor extends WorkerHost {
           costCents,
         });
       }
+
+      // Record telemetry metrics
+      const duration = (Date.now() - startTime) / 1000;
+      this.telemetryService.recordJobMetrics(type, duration, true, orgId, tokensUsed);
+
+      span.setAttributes({
+        'job.duration_ms': Date.now() - startTime,
+        'job.tokens_used': tokensUsed,
+        'job.cost_cents': costCents,
+      });
 
       this.logger.log(
         `Job ${jobId} completed successfully. Tokens: ${tokensUsed}, Cost: $${costCents / 100}`,
@@ -108,10 +143,17 @@ export class AIJobsProcessor extends WorkerHost {
           costCents,
           completedAt: new Date().toISOString(),
         });
+        span.addEvent('job.processing.webhook_sent', {
+          event: 'job.completed',
+        });
       } catch (webhookError: any) {
         this.logger.warn(`Failed to send job completion webhook: ${webhookError.message}`);
+        span.addEvent('job.processing.webhook_failed', {
+          error: webhookError.message,
+        });
       }
 
+      span.setStatus({ code: 1, message: 'Job completed successfully' });
       return result;
     } catch (error: any) {
       this.logger.error(`Job ${jobId} failed: ${error.message}`, error.stack);
@@ -126,6 +168,15 @@ export class AIJobsProcessor extends WorkerHost {
         },
       });
 
+      // Record telemetry metrics for failed job
+      const duration = (Date.now() - startTime) / 1000;
+      this.telemetryService.recordJobMetrics(type, duration, false, orgId);
+
+      span.setAttributes({
+        'job.duration_ms': Date.now() - startTime,
+        'job.error': error.message,
+      });
+
       // Send webhook notification for job failure
       try {
         await this.webhooksService.sendWebhook(orgId, 'job.failed', {
@@ -136,11 +187,20 @@ export class AIJobsProcessor extends WorkerHost {
           failedAt: new Date().toISOString(),
           attempts: job.attemptsMade + 1,
         });
+        span.addEvent('job.processing.webhook_sent', {
+          event: 'job.failed',
+        });
       } catch (webhookError: any) {
         this.logger.warn(`Failed to send job failure webhook: ${webhookError.message}`);
+        span.addEvent('job.processing.webhook_failed', {
+          error: webhookError.message,
+        });
       }
 
+      this.telemetryService.setSpanError(error, `Job ${jobId} failed`);
       throw error; // Re-throw to let BullMQ handle retries
+    } finally {
+      span.end();
     }
   }
 

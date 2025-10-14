@@ -7,6 +7,7 @@ import { AIJobsProcessor } from './processors/ai-jobs.processor';
 import { WebhookProcessor } from './processors/webhook.processor';
 import { UsageModule } from '../usage/usage.module';
 import { WebhooksModule } from '../webhooks/webhooks.module';
+import { TelemetryModule } from '../telemetry/telemetry.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { WebhooksModule } from '../webhooks/webhooks.module';
     ),
     UsageModule, // For recording usage in processor
     forwardRef(() => WebhooksModule), // For sending webhook notifications
+    TelemetryModule, // For observability and metrics
   ],
   controllers: [QueueController],
   providers: [QueueService, AIJobsProcessor, WebhookProcessor],
