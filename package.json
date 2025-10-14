@@ -5,12 +5,6 @@
   "description": "Production-grade starter for AI apps with usage-based billing",
   "author": "LaunchKit Team",
   "license": "MIT",
-  "workspaces": [
-    "app",
-    "api",
-    "workers",
-    "scripts"
-  ],
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
@@ -25,8 +19,7 @@
     "docker:down": "docker-compose down",
     "railway:deploy": "./railway-deploy.sh",
     "railway:migrate": "cd api && pnpm prisma migrate deploy",
-    "railway:seed": "cd api && pnpm prisma db seed",
-    "postinstall": "cd api && pnpm prisma generate"
+    "railway:seed": "cd api && pnpm prisma db seed"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
