@@ -13,5 +13,10 @@ cmds = [
   'cp -r api/dist ./dist'
 ]
 
+[phases.deploy]
+cmds = [
+  'pnpm prisma db push --schema=prisma/schema.prisma'
+]
+
 [start]
-cmd = 'pnpm prisma db push --schema=prisma/schema.prisma && echo "Database setup complete" && ls -la dist/ && node dist/main.js'
+cmd = 'node dist/main.js'
