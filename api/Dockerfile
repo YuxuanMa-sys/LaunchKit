@@ -15,7 +15,7 @@ RUN pnpm install --no-frozen-lockfile
 # Generate Prisma client and build
 WORKDIR /app/api
 RUN echo "Generating Prisma client..." && pnpm prisma generate
-RUN echo "Building application..." && pnpm run build
+RUN echo "Building application with TypeScript..." && npx tsc
 RUN echo "Build completed, listing current directory:" && ls -la
 RUN echo "Looking for dist directory..." && find . -name "dist" -type d
 RUN echo "Listing any build output:" && ls -la || echo "No files found"
