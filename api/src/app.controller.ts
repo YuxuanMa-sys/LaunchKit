@@ -42,6 +42,7 @@ export class AppController {
   @ApiOperation({ summary: 'Simple ping endpoint' })
   @ApiResponse({ status: 200, description: 'Service is responding' })
   getPing() {
+    console.log('🏓 Ping endpoint called');
     return { status: 'pong', timestamp: new Date().toISOString() };
   }
 }
