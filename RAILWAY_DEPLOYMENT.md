@@ -8,9 +8,40 @@ This guide will help you deploy LaunchKit to Railway, a modern platform for depl
 2. **Railway CLI**: Install with `npm install -g @railway/cli`
 3. **Git Repository**: Your LaunchKit code pushed to GitHub/GitLab
 
-## 🚀 Quick Deployment
+## 🚀 Quick Deployment (Monorepo Auto-Detection)
 
-### Option 1: Using the Deployment Script
+### Option 1: Import Monorepo (Recommended)
+
+1. **Go to Railway Dashboard**: https://railway.app
+2. **Click "New Project"** → **"Deploy from GitHub repo"**
+3. **Select your LaunchKit repository**
+4. **Railway will automatically detect**:
+   - `/api` → NestJS API service
+   - `/app` → Next.js frontend service
+5. **Add required services**:
+   - PostgreSQL database
+   - Redis instance
+
+### Option 2: Using Railway CLI
+
+```bash
+# Login to Railway
+railway login
+
+# Initialize project (detects monorepo automatically)
+railway init
+
+# Add PostgreSQL database
+railway add postgresql
+
+# Add Redis
+railway add redis
+
+# Deploy all services
+railway up
+```
+
+### Option 3: Using the Deployment Script
 
 ```bash
 # Make sure you're in the project root
@@ -20,32 +51,20 @@ cd /path/to/LaunchKit
 pnpm run railway:deploy
 ```
 
-### Option 2: Manual Deployment
-
-```bash
-# Login to Railway
-railway login
-
-# Create a new project
-railway project new
-
-# Add PostgreSQL database
-railway add postgresql
-
-# Add Redis
-railway add redis
-
-# Deploy the application
-railway up
-```
-
 ## 🔧 Configuration
 
-### 1. Environment Variables
+### 1. Monorepo Structure
 
-Set these in your Railway dashboard:
+Railway automatically detects and separates:
+- **API Service** (`/api`): NestJS backend with database
+- **Frontend Service** (`/app`): Next.js dashboard
+- **Shared Services**: PostgreSQL, Redis
 
-#### Required Variables
+### 2. Environment Variables
+
+Set these in your Railway dashboard for each service:
+
+#### API Service Environment Variables
 ```bash
 # Database (Railway provides this automatically)
 DATABASE_URL=postgresql://postgres:password@host:port/db
@@ -55,12 +74,29 @@ REDIS_URL=redis://host:port
 
 # Authentication
 JWT_SECRET=your-super-secret-jwt-key-min-32-chars
-JWT_ISSUER=https://your-app.railway.app
+JWT_ISSUER=https://your-api.railway.app
 CLERK_SECRET_KEY=sk_live_...
 
 # Stripe (Production)
 STRIPE_SECRET_KEY=sk_live_...
 STRIPE_WEBHOOK_SECRET=whsec_...
+```
+
+#### Frontend Service Environment Variables
+```bash
+# API URL (points to your deployed API service)
+NEXT_PUBLIC_API_URL=https://your-api.railway.app/v1
+
+# Clerk Authentication
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_live_...
+CLERK_SECRET_KEY=sk_live_...
+CLERK_WEBHOOK_SECRET=whsec_...
+
+# App URLs
+NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard
+NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard
 ```
 
 #### Optional Variables
@@ -82,22 +118,25 @@ LOG_LEVEL=info
 LOG_FORMAT=json
 ```
 
-### 2. Database Setup
+### 3. Database Setup
 
-After deployment, run migrations:
+After deployment, run migrations for the API service:
 
 ```bash
 # Connect to your Railway project
 railway link
 
+# Switch to API service
+railway service api
+
 # Run migrations
-pnpm run railway:migrate
+railway run pnpm prisma migrate deploy
 
 # Seed database (optional)
-pnpm run railway:seed
+railway run pnpm prisma db seed
 ```
 
-### 3. Custom Domain (Optional)
+### 4. Custom Domain (Optional)
 
 1. Go to your Railway project dashboard
 2. Navigate to Settings → Domains

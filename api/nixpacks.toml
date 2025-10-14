@@ -1,0 +1,19 @@
+[phases.setup]
+nixPkgs = ['nodejs_18', 'pnpm']
+
+[phases.install]
+cmds = ['pnpm install --no-frozen-lockfile']
+
+[phases.build]
+cmds = [
+  'pnpm prisma generate',
+  'pnpm build'
+]
+
+[phases.deploy]
+cmds = [
+  'pnpm prisma migrate deploy'
+]
+
+[start]
+cmd = 'PORT=$PORT node dist/main.js'
