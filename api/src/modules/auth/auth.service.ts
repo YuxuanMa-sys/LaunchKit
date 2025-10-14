@@ -33,7 +33,7 @@ export class AuthService {
 
       return {
         user,
-        organizations: user?.memberships.map((m) => m.org) || [],
+        organizations: user?.memberships.map((m: any) => m.org) || [],
       };
     } catch (error) {
       throw new UnauthorizedException('Token verification failed');

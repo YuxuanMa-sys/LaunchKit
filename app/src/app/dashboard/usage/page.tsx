@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { apiClient } from '@/lib/api';
 import { Activity, TrendingUp, DollarSign, AlertCircle } from 'lucide-react';
@@ -39,11 +39,7 @@ export default function UsagePage() {
   const [selectedOrg, setSelectedOrg] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -80,7 +76,11 @@ export default function UsagePage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [getToken]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   if (loading) {
     return (
@@ -127,7 +127,7 @@ export default function UsagePage() {
           <div>
             <h3 className="font-semibold text-yellow-900">Approaching Usage Limit</h3>
             <p className="text-sm text-yellow-800 mt-1">
-              You've used over 80% of your monthly quota. Consider upgrading your plan to avoid service interruption.
+              You&apos;ve used over 80% of your monthly quota. Consider upgrading your plan to avoid service interruption.
             </p>
           </div>
         </div>

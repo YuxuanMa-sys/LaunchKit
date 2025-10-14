@@ -174,7 +174,7 @@ async function main() {
       input: {
         text: 'This job will fail for demonstration purposes.',
       },
-      output: Prisma.JsonNull,
+      output: Prisma.DbNull,
       error: 'Simulated failure for demo purposes',
       orgId: 'org_demo_startup',
       tokenUsed: 0,

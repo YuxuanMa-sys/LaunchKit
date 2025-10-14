@@ -154,7 +154,7 @@ export class UsageService {
     });
 
     const total = usage.reduce(
-      (acc, u) => ({
+      (acc: any, u: any) => ({
         tokens: acc.tokens + u.tokens,
         jobs: acc.jobs + u.jobs,
         costCents: acc.costCents + u.costCents,
@@ -210,7 +210,7 @@ export class UsageService {
     // Group by day
     const dailyUsage = new Map<string, { jobs: number; tokens: number; costCents: number }>();
 
-    usage.forEach((u) => {
+    usage.forEach((u: any) => {
       const day = u.windowStart.toISOString().substring(0, 10);
       const existing = dailyUsage.get(day) || { jobs: 0, tokens: 0, costCents: 0 };
       dailyUsage.set(day, {

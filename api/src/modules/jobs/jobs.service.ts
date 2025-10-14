@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../infra/prisma/prisma.service';
-import { JobType, JobStatus } from '@prisma/client';
+// Use string literals instead of Prisma enums to avoid import issues
+type JobType = 'SUMMARIZE' | 'CLASSIFY' | 'SENTIMENT' | 'EXTRACT' | 'TRANSLATE';
+type JobStatus = 'QUEUED' | 'PROCESSING' | 'SUCCEEDED' | 'FAILED';
 import { UsageService } from '../usage/usage.service';
 import { QueueService } from '../queue/queue.service';
 
@@ -23,7 +25,7 @@ export class JobsService {
       data: {
         orgId,
         type,
-        status: JobStatus.QUEUED,
+        status: 'QUEUED',
         input,
       },
     });
@@ -65,7 +67,7 @@ export class JobsService {
     }
 
     // Enrich with BullMQ queue status if still processing
-    if (job.status === JobStatus.QUEUED || job.status === JobStatus.PROCESSING) {
+    if (job.status === 'QUEUED' || job.status === 'PROCESSING') {
       const queueStatus = await this.queueService.getJobStatus(job.id);
       if (queueStatus) {
         return {
@@ -106,7 +108,7 @@ export class JobsService {
     const job = await this.prisma.job.update({
       where: { id: jobId },
       data: {
-        status: JobStatus.SUCCEEDED,
+        status: 'SUCCEEDED',
         output,
         tokenUsed: tokensUsed,
         costCents: Math.ceil(tokensUsed * 0.001), // Example: $0.001 per 1000 tokens

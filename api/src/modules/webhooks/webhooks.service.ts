@@ -74,7 +74,7 @@ export class WebhooksService {
     };
 
     // Add each webhook to the queue for delivery
-    const deliveryPromises = endpoints.map(endpoint => 
+    const deliveryPromises = endpoints.map((endpoint: any) => 
       this.queueService.addWebhook({
         webhookId: endpoint.id,
         url: endpoint.url,
@@ -89,7 +89,7 @@ export class WebhooksService {
       sent: endpoints.length,
       message: `Webhook queued for ${endpoints.length} endpoint(s)`,
       event,
-      endpoints: endpoints.map(e => ({ id: e.id, url: e.url })),
+      endpoints: endpoints.map((e: any) => ({ id: e.id, url: e.url })),
     };
   }
 

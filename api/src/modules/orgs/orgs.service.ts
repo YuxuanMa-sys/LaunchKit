@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../../infra/prisma/prisma.service';
-import { PlanTier, OrgRole } from '@prisma/client';
+// Use string literals instead of Prisma enums to avoid import issues
+type PlanTier = 'FREE' | 'PRO' | 'ENTERPRISE';
+type OrgRole = 'OWNER' | 'ADMIN' | 'MEMBER';
 
 @Injectable()
 export class OrgsService {
@@ -17,7 +19,7 @@ export class OrgsService {
       },
     });
 
-    return memberships.map((m) => ({
+    return memberships.map((m: any) => ({
       ...m.org,
       role: m.role,
     }));
@@ -69,11 +71,11 @@ export class OrgsService {
       data: {
         name: data.name,
         slug: data.slug,
-        planTier: PlanTier.FREE,
+        planTier: 'FREE',
         memberships: {
           create: {
             userId,
-            role: OrgRole.OWNER,
+            role: 'OWNER',
           },
         },
       },

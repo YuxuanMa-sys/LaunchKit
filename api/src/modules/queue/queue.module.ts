@@ -13,15 +13,24 @@ import { TelemetryModule } from '../telemetry/telemetry.module';
   imports: [
     BullModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: async (configService: ConfigService) => ({
-        connection: {
-          host: configService.get('REDIS_HOST', 'localhost'),
-          port: configService.get('REDIS_PORT', 6379),
-          password: configService.get('REDIS_PASSWORD'),
-          // Alternatively, use REDIS_URL if provided
-          // You can parse it or use ioredis URL format directly
-        },
-      }),
+      useFactory: async (configService: ConfigService) => {
+        const redisUrl = configService.get('REDIS_URL');
+        console.log('Redis URL from config:', redisUrl);
+        
+        if (redisUrl) {
+          console.log('Using REDIS_URL for connection');
+          return { connection: redisUrl };
+        }
+        
+        console.log('Falling back to individual Redis config');
+        return {
+          connection: {
+            host: configService.get('REDIS_HOST', 'localhost'),
+            port: configService.get('REDIS_PORT', 6379),
+            password: configService.get('REDIS_PASSWORD'),
+          },
+        };
+      },
       inject: [ConfigService],
     }),
     // Register specific queues
