@@ -8,4 +8,4 @@ healthcheckPath = "/v1/health/simple"
 healthcheckTimeout = 30
 
 [networking]
-port = 8080
+port = 3001
