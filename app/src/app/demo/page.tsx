@@ -31,18 +31,35 @@ export default function DemoPage() {
   const [apiKeys, setApiKeys] = useState<any[]>([]);
   const [selectedApiKey, setSelectedApiKey] = useState<string>('');
   const [loadingApiKeys, setLoadingApiKeys] = useState<boolean>(false);
+  const [manualApiKey, setManualApiKey] = useState<string>('');
+  const [useManualKey, setUseManualKey] = useState<boolean>(false);
 
   const loadApiKeys = async () => {
     setLoadingApiKeys(true);
     try {
-      const response = await apiClient.get('/api-keys');
+      const token = await getToken();
+      if (!token) {
+        throw new Error('No authentication token available');
+      }
+
+      const response = await apiClient.get('/api-keys', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
       const keys = response.data || [];
       setApiKeys(keys);
       if (keys.length > 0 && !selectedApiKey) {
-        setSelectedApiKey(keys[0].key);
+        setSelectedApiKey(keys[0].key || keys[0].id);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to load API keys:', err);
+      console.error('Error details:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status
+      });
     } finally {
       setLoadingApiKeys(false);
     }
@@ -60,8 +77,10 @@ export default function DemoPage() {
         throw new Error('No authentication token available');
       }
 
-      if (!selectedApiKey) {
-        throw new Error('Please select an API key');
+      const apiKeyToUse = useManualKey ? manualApiKey : selectedApiKey;
+      
+      if (!apiKeyToUse) {
+        throw new Error('Please select an API key or enter one manually');
       }
 
       // Create the job using API key authentication
@@ -71,8 +90,8 @@ export default function DemoPage() {
         parameters: jobData.parameters
       }, {
         headers: {
-          'Authorization': `Bearer ${selectedApiKey}`,
-          'X-API-Key': selectedApiKey
+          'Authorization': `Bearer ${apiKeyToUse}`,
+          'X-API-Key': apiKeyToUse
         }
       });
 
@@ -133,11 +152,16 @@ export default function DemoPage() {
                   <option value="">
                     {loadingApiKeys ? 'Loading API keys...' : 'Select an API key'}
                   </option>
-                  {apiKeys.map((key) => (
-                    <option key={key.id} value={key.key}>
-                      {key.name} ({key.key.substring(0, 20)}...)
-                    </option>
-                  ))}
+                  {apiKeys.map((key) => {
+                    const keyValue = key.key || key.id || '';
+                    const keyName = key.name || key.id || 'Unnamed Key';
+                    const keyPreview = keyValue ? keyValue.substring(0, 20) + '...' : 'No key';
+                    return (
+                      <option key={key.id} value={keyValue}>
+                        {keyName} ({keyPreview})
+                      </option>
+                    );
+                  })}
                 </select>
                 <button
                   type="button"
@@ -152,6 +176,32 @@ export default function DemoPage() {
                 <p className="mt-1 text-sm text-gray-500">
                   No API keys found. Create one in the API Keys section first.
                 </p>
+              )}
+            </div>
+
+            {/* Manual API Key Input */}
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <input
+                  type="checkbox"
+                  id="useManualKey"
+                  checked={useManualKey}
+                  onChange={(e) => setUseManualKey(e.target.checked)}
+                  className="rounded border-gray-300"
+                />
+                <label htmlFor="useManualKey" className="text-sm font-medium text-gray-700">
+                  Enter API key manually
+                </label>
+              </div>
+              
+              {useManualKey && (
+                <input
+                  type="password"
+                  value={manualApiKey}
+                  onChange={(e) => setManualApiKey(e.target.value)}
+                  placeholder="lk_test_pk_..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
               )}
             </div>
 
