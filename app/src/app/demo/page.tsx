@@ -89,8 +89,10 @@ export default function DemoPage() {
       // Create the job using API key authentication
       const response = await apiClient.post('/jobs', {
         type: jobData.type,
-        input: jobData.input,
-        parameters: jobData.parameters
+        input: {
+          text: jobData.input,
+          parameters: jobData.parameters
+        }
       }, {
         headers: {
           'Authorization': `Bearer ${apiKeyToUse}`,
