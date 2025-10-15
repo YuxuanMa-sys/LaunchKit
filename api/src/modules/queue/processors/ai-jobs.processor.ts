@@ -36,12 +36,21 @@ export class AIJobsProcessor extends WorkerHost {
     const span = this.telemetryService.createJobSpan(type, jobId, orgId);
 
     try {
-      // Validate input structure
-      if (!input || typeof input !== 'object') {
-        throw new Error(`Invalid input: expected object, got ${typeof input}`);
+      // Handle backward compatibility - input might be a string (old format) or object (new format)
+      let processedInput: any;
+      
+      if (typeof input === 'string') {
+        // Old format: input is directly the text string
+        this.logger.warn(`Job ${jobId} using legacy string input format - consider updating client`);
+        processedInput = { text: input };
+      } else if (input && typeof input === 'object') {
+        // New format: input is an object with text field
+        processedInput = input;
+      } else {
+        throw new Error(`Invalid input: expected string or object, got ${typeof input}`);
       }
 
-      if (!input.text && input.text !== '') {
+      if (!processedInput.text && processedInput.text !== '') {
         throw new Error('Input must contain a "text" field');
       }
 
@@ -69,28 +78,28 @@ export class AIJobsProcessor extends WorkerHost {
 
       switch (type) {
         case 'SUMMARIZE':
-          result = await this.processSummarize(input);
-          tokensUsed = this.estimateTokens(input.text + result.summary);
+          result = await this.processSummarize(processedInput);
+          tokensUsed = this.estimateTokens(processedInput.text + result.summary);
           break;
 
         case 'CLASSIFY':
-          result = await this.processClassify(input);
-          tokensUsed = this.estimateTokens(input.text + result.classification);
+          result = await this.processClassify(processedInput);
+          tokensUsed = this.estimateTokens(processedInput.text + result.classification);
           break;
 
         case 'SENTIMENT':
-          result = await this.processSentiment(input);
-          tokensUsed = this.estimateTokens(input.text);
+          result = await this.processSentiment(processedInput);
+          tokensUsed = this.estimateTokens(processedInput.text);
           break;
 
         case 'TRANSLATE':
-          result = await this.processTranslate(input);
-          tokensUsed = this.estimateTokens(input.text + result.translation);
+          result = await this.processTranslate(processedInput);
+          tokensUsed = this.estimateTokens(processedInput.text + result.translation);
           break;
 
         case 'EXTRACT':
-          result = await this.processExtract(input);
-          tokensUsed = this.estimateTokens(input.text + JSON.stringify(result.entities));
+          result = await this.processExtract(processedInput);
+          tokensUsed = this.estimateTokens(processedInput.text + JSON.stringify(result.entities));
           break;
 
         default:
