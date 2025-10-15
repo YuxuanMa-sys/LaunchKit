@@ -5,7 +5,7 @@ import { useAuth } from '@clerk/nextjs';
 import apiClient from '@/lib/api';
 
 interface JobData {
-  type: 'text_generation' | 'text_analysis' | 'image_generation';
+  type: 'SUMMARIZE' | 'CLASSIFY' | 'SENTIMENT' | 'EXTRACT' | 'TRANSLATE';
   input: string;
   parameters?: {
     max_tokens?: number;
@@ -20,7 +20,7 @@ export default function DemoPage() {
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [jobData, setJobData] = useState<JobData>({
-    type: 'text_generation',
+    type: 'SUMMARIZE',
     input: 'Write a short story about a robot learning to paint.',
     parameters: {
       max_tokens: 150,
@@ -41,21 +41,26 @@ export default function DemoPage() {
         throw new Error('No authentication token available');
       }
 
-      // Get organization ID (using the first org for demo)
-      const orgsResponse = await apiClient.get('/orgs');
-      const orgs = orgsResponse.data;
+      // Get API keys first
+      const apiKeysResponse = await apiClient.get('/api-keys');
+      const apiKeys = apiKeysResponse.data;
       
-      if (!orgs || orgs.length === 0) {
-        throw new Error('No organizations found. Please create an organization first.');
+      if (!apiKeys || apiKeys.length === 0) {
+        throw new Error('No API keys found. Please create an API key first in the API Keys section.');
       }
 
-      const orgId = orgs[0].id;
+      const apiKey = apiKeys[0].key;
 
-      // Create the job
-      const response = await apiClient.post(`/orgs/${orgId}/jobs`, {
+      // Create the job using API key authentication
+      const response = await apiClient.post('/jobs', {
         type: jobData.type,
         input: jobData.input,
         parameters: jobData.parameters
+      }, {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'X-API-Key': apiKey
+        }
       });
 
       setResult(response.data);
@@ -106,9 +111,11 @@ export default function DemoPage() {
                 onChange={(e) => handleInputChange('type', e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
-                <option value="text_generation">Text Generation</option>
-                <option value="text_analysis">Text Analysis</option>
-                <option value="image_generation">Image Generation</option>
+                <option value="SUMMARIZE">Summarize</option>
+                <option value="CLASSIFY">Classify</option>
+                <option value="SENTIMENT">Sentiment Analysis</option>
+                <option value="EXTRACT">Extract</option>
+                <option value="TRANSLATE">Translate</option>
               </select>
             </div>
 
@@ -207,10 +214,11 @@ export default function DemoPage() {
           <h3 className="text-lg font-medium text-blue-900 mb-3">How to Use This Demo</h3>
           <div className="text-blue-800 space-y-2">
             <p>1. Make sure you&apos;re logged in with Clerk authentication</p>
-            <p>2. You should have at least one organization (created automatically)</p>
-            <p>3. Adjust the job parameters as needed</p>
-            <p>4. Click &quot;Create Job&quot; to test the AI job creation API</p>
-            <p>5. Check the result to see the job details and status</p>
+            <p>2. Create an API key in the API Keys section first</p>
+            <p>3. Select a job type (Summarize, Classify, etc.)</p>
+            <p>4. Enter your input text and adjust parameters</p>
+            <p>5. Click &quot;Create Job&quot; to test the AI job creation API</p>
+            <p>6. Check the result to see the job details and status</p>
           </div>
         </div>
       </div>
