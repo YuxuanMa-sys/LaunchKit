@@ -49,9 +49,12 @@ export default function DemoPage() {
       });
       
       const keys = response.data || [];
+      console.log('API Keys response:', keys);
       setApiKeys(keys);
       if (keys.length > 0 && !selectedApiKey) {
-        setSelectedApiKey(keys[0].key || keys[0].id);
+        // Use the prefix as the key value
+        const firstKey = keys[0].prefix || keys[0].id;
+        setSelectedApiKey(firstKey);
       }
     } catch (err: any) {
       console.error('Failed to load API keys:', err);
@@ -153,12 +156,14 @@ export default function DemoPage() {
                     {loadingApiKeys ? 'Loading API keys...' : 'Select an API key'}
                   </option>
                   {apiKeys.map((key) => {
-                    const keyValue = key.key || key.id || '';
-                    const keyName = key.name || key.id || 'Unnamed Key';
-                    const keyPreview = keyValue ? keyValue.substring(0, 20) + '...' : 'No key';
+                    // The API only returns the prefix, not the full key
+                    const keyValue = key.prefix || key.id || '';
+                    const keyName = key.name || 'Unnamed Key';
+                    const orgName = key.org?.name || 'Unknown Org';
+                    
                     return (
                       <option key={key.id} value={keyValue}>
-                        {keyName} ({keyPreview})
+                        {keyName} ({keyValue}) - {orgName}
                       </option>
                     );
                   })}
@@ -177,6 +182,11 @@ export default function DemoPage() {
                   No API keys found. Create one in the API Keys section first.
                 </p>
               )}
+              {apiKeys.length > 0 && (
+                <p className="mt-1 text-sm text-gray-500">
+                  Note: The dropdown shows API key prefixes. For authentication, you need the full API key (use manual input below).
+                </p>
+              )}
             </div>
 
             {/* Manual API Key Input */}
@@ -190,7 +200,7 @@ export default function DemoPage() {
                   className="rounded border-gray-300"
                 />
                 <label htmlFor="useManualKey" className="text-sm font-medium text-gray-700">
-                  Enter API key manually
+                  Enter full API key manually (required for authentication)
                 </label>
               </div>
               
@@ -316,14 +326,16 @@ export default function DemoPage() {
         {/* Instructions */}
         <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
           <h3 className="text-lg font-medium text-blue-900 mb-3">How to Use This Demo</h3>
-          <div className="text-blue-800 space-y-2">
-            <p>1. Make sure you&apos;re logged in with Clerk authentication</p>
-            <p>2. Create an API key in the API Keys section first</p>
-            <p>3. Select a job type (Summarize, Classify, etc.)</p>
-            <p>4. Enter your input text and adjust parameters</p>
-            <p>5. Click &quot;Create Job&quot; to test the AI job creation API</p>
-            <p>6. Check the result to see the job details and status</p>
-          </div>
+              <div className="text-blue-800 space-y-2">
+                <p>1. Make sure you&apos;re logged in with Clerk authentication</p>
+                <p>2. Create an API key in the API Keys section first</p>
+                <p>3. <strong>Copy the full API key</strong> (starts with lk_live_pk_ or lk_test_pk_)</p>
+                <p>4. Check &quot;Enter full API key manually&quot; and paste the complete key</p>
+                <p>5. Select a job type (Summarize, Classify, etc.)</p>
+                <p>6. Enter your input text and adjust parameters</p>
+                <p>7. Click &quot;Create Job&quot; to test the AI job creation API</p>
+                <p>8. Check the result to see the job details and status</p>
+              </div>
         </div>
       </div>
     </div>
