@@ -206,10 +206,10 @@ export default function DemoPage() {
         <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
           <h3 className="text-lg font-medium text-blue-900 mb-3">How to Use This Demo</h3>
           <div className="text-blue-800 space-y-2">
-            <p>1. Make sure you're logged in with Clerk authentication</p>
+            <p>1. Make sure you&apos;re logged in with Clerk authentication</p>
             <p>2. You should have at least one organization (created automatically)</p>
             <p>3. Adjust the job parameters as needed</p>
-            <p>4. Click "Create Job" to test the AI job creation API</p>
+            <p>4. Click &quot;Create Job&quot; to test the AI job creation API</p>
             <p>5. Check the result to see the job details and status</p>
           </div>
         </div>
