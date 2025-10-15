@@ -79,7 +79,7 @@ export class AIJobsProcessor extends WorkerHost {
       switch (type) {
         case 'SUMMARIZE':
           result = await this.processSummarize(processedInput);
-          tokensUsed = this.estimateTokens(processedInput.text + result.summary);
+          tokensUsed = result.tokens_used || this.estimateTokens(processedInput.text + result.summary);
           break;
 
         case 'CLASSIFY':
@@ -233,12 +233,19 @@ export class AIJobsProcessor extends WorkerHost {
     await this.delay(1000);
 
     const text = input.text || '';
-    const summary = text.length > 100 ? text.substring(0, 100) + '...' : text;
+    const maxTokens = input.parameters?.max_tokens || 150;
+    
+    // Estimate output length based on max_tokens (rough approximation)
+    const maxOutputLength = maxTokens * 4; // 4 characters per token
+    const summary = text.length > maxOutputLength ? text.substring(0, maxOutputLength) + '...' : text;
+
+    this.logger.log(`Summarize: input=${text.length} chars, max_tokens=${maxTokens}, output=${summary.length} chars`);
 
     return {
       summary,
       originalLength: text.length,
       summaryLength: summary.length,
+      tokens_used: Math.min(this.estimateTokens(text), maxTokens),
     };
   }
 
