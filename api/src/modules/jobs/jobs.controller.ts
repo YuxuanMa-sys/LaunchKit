@@ -49,6 +49,17 @@ export class JobsController {
     );
   }
 
+  @Post()
+  @UseGuards(ApiKeyGuard)
+  @ApiSecurity('api-key')
+  @ApiOperation({ summary: 'Create job with specified type' })
+  async createJob(
+    @CurrentOrg() org: any,
+    @Body() data: { type: string; input: any; parameters?: any },
+  ) {
+    return this.jobsService.createJob(org.id, data.type as any, data.input);
+  }
+
   @Post('summarize')
   @UseGuards(ApiKeyGuard)
   @ApiSecurity('api-key')
