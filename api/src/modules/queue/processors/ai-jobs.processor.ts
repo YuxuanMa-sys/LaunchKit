@@ -30,11 +30,21 @@ export class AIJobsProcessor extends WorkerHost {
     const startTime = Date.now();
 
     this.logger.log(`Processing job ${jobId} of type ${type} for org ${orgId}`);
+    this.logger.log(`Job input data:`, JSON.stringify(input, null, 2));
 
     // Create telemetry span for job processing
     const span = this.telemetryService.createJobSpan(type, jobId, orgId);
 
     try {
+      // Validate input structure
+      if (!input || typeof input !== 'object') {
+        throw new Error(`Invalid input: expected object, got ${typeof input}`);
+      }
+
+      if (!input.text && input.text !== '') {
+        throw new Error('Input must contain a "text" field');
+      }
+
       span.addEvent('job.processing.started', {
         job_type: type,
         org_id: orgId,
@@ -274,7 +284,10 @@ export class AIJobsProcessor extends WorkerHost {
   /**
    * Estimate token count (rough approximation: 1 token ≈ 4 characters)
    */
-  private estimateTokens(text: string): number {
+  private estimateTokens(text: string | undefined): number {
+    if (!text || typeof text !== 'string') {
+      return 0;
+    }
     return Math.ceil(text.length / 4);
   }
 
