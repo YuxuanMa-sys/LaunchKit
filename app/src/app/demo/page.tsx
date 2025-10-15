@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import apiClient from '@/lib/api';
 
@@ -28,6 +28,25 @@ export default function DemoPage() {
       model: 'gpt-3.5-turbo'
     }
   });
+  const [apiKeys, setApiKeys] = useState<any[]>([]);
+  const [selectedApiKey, setSelectedApiKey] = useState<string>('');
+  const [loadingApiKeys, setLoadingApiKeys] = useState<boolean>(false);
+
+  const loadApiKeys = async () => {
+    setLoadingApiKeys(true);
+    try {
+      const response = await apiClient.get('/api-keys');
+      const keys = response.data || [];
+      setApiKeys(keys);
+      if (keys.length > 0 && !selectedApiKey) {
+        setSelectedApiKey(keys[0].key);
+      }
+    } catch (err) {
+      console.error('Failed to load API keys:', err);
+    } finally {
+      setLoadingApiKeys(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,15 +60,9 @@ export default function DemoPage() {
         throw new Error('No authentication token available');
       }
 
-      // Get API keys first
-      const apiKeysResponse = await apiClient.get('/api-keys');
-      const apiKeys = apiKeysResponse.data;
-      
-      if (!apiKeys || apiKeys.length === 0) {
-        throw new Error('No API keys found. Please create an API key first in the API Keys section.');
+      if (!selectedApiKey) {
+        throw new Error('Please select an API key');
       }
-
-      const apiKey = apiKeys[0].key;
 
       // Create the job using API key authentication
       const response = await apiClient.post('/jobs', {
@@ -58,8 +71,8 @@ export default function DemoPage() {
         parameters: jobData.parameters
       }, {
         headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'X-API-Key': apiKey
+          'Authorization': `Bearer ${selectedApiKey}`,
+          'X-API-Key': selectedApiKey
         }
       });
 
@@ -71,6 +84,10 @@ export default function DemoPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadApiKeys();
+  }, []);
 
   const handleInputChange = (field: keyof JobData, value: any) => {
     setJobData(prev => ({
@@ -101,6 +118,43 @@ export default function DemoPage() {
 
         <div className="bg-white shadow rounded-lg p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
+            {/* API Key Selection */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                API Key
+              </label>
+              <div className="flex gap-2">
+                <select
+                  value={selectedApiKey}
+                  onChange={(e) => setSelectedApiKey(e.target.value)}
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  disabled={loadingApiKeys}
+                >
+                  <option value="">
+                    {loadingApiKeys ? 'Loading API keys...' : 'Select an API key'}
+                  </option>
+                  {apiKeys.map((key) => (
+                    <option key={key.id} value={key.key}>
+                      {key.name} ({key.key.substring(0, 20)}...)
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={loadApiKeys}
+                  disabled={loadingApiKeys}
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50"
+                >
+                  {loadingApiKeys ? 'Loading...' : 'Refresh'}
+                </button>
+              </div>
+              {apiKeys.length === 0 && !loadingApiKeys && (
+                <p className="mt-1 text-sm text-gray-500">
+                  No API keys found. Create one in the API Keys section first.
+                </p>
+              )}
+            </div>
+
             {/* Job Type */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
