@@ -282,13 +282,26 @@ export class AIJobsProcessor extends WorkerHost {
   }
 
   /**
-   * Estimate token count (rough approximation: 1 token ≈ 4 characters)
+   * Estimate token count using multiple methods for better accuracy
    */
   private estimateTokens(text: string | undefined): number {
     if (!text || typeof text !== 'string') {
       return 0;
     }
-    return Math.ceil(text.length / 4);
+
+    // Method 1: Character-based (1 token ≈ 4 characters)
+    const charBased = Math.ceil(text.length / 4);
+    
+    // Method 2: Word-based (1 token ≈ 0.75 words)
+    const wordCount = text.trim().split(/\s+/).length;
+    const wordBased = Math.ceil(wordCount / 0.75);
+    
+    // Method 3: Hybrid approach - use the higher estimate for safety
+    const estimate = Math.max(charBased, wordBased);
+    
+    this.logger.debug(`Token estimation for "${text.substring(0, 50)}...": chars=${text.length}, words=${wordCount}, char-based=${charBased}, word-based=${wordBased}, final=${estimate}`);
+    
+    return estimate;
   }
 
   private delay(ms: number): Promise<void> {
